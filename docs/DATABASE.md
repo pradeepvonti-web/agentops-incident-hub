@@ -95,7 +95,9 @@ for consumers that want server-sent events instead.
 
 ## Migrations
 
-Applied in order:
+The SQL is in `supabase/migrations/`, one file per migration, exported from
+the reference project's migration history so `supabase db push` reproduces it
+exactly. Applied in order:
 
 ```text
 agentops_schema_and_enums          types, is_active()

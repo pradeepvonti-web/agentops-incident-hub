@@ -39,10 +39,11 @@ and the rules enforced in SQL, `docs/API_CONTRACT.md` the endpoints.
 
 ## Quick start
 
-### 1. Point it at Supabase
+### 1. Create the database
 
-In the Supabase dashboard, under **Project Settings → API → Exposed schemas**,
-add `agentops`. Then:
+Apply the migrations in `supabase/migrations/` to your own project — `supabase
+link` then `supabase db push`; `supabase/README.md` has the details — and add
+`agentops` under **Project Settings → API → Exposed schemas**. Then:
 
 ```bash
 cp frontend/.env.example frontend/.env.local   # add your URL and publishable key
