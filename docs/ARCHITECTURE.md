@@ -16,6 +16,19 @@ directly, and subscribes to changes. The FastAPI service is not in that path. It
 exists so that agents, scripts and inbound integrations have an HTTP surface that
 does not need a browser session.
 
+## Repository map
+
+```text
+backend/       FastAPI: agent-facing API, SSE, webhooks, offline fixtures, tests
+frontend/      React + Vite: the product app and the marketing site
+supabase/      migrations that reproduce the database, plus how to apply them
+sample-data/   the fixtures the API, scripts and tests use offline
+scripts/       deterministic transformations, including the video generators
+docs/          rules, contracts, this file, the database notes, three articles
+evals/         checklists a change must pass
+skills/        packaged workflows for an agent to run
+```
+
 ## Frontend
 
 React + TypeScript + Vite, routed with react-router-dom.

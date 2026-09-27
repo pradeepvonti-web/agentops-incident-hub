@@ -6,6 +6,10 @@ A small but complete reference project for learning **agentic engineering**:
 context engineering, deterministic tooling, reusable skills, validation,
 and parallel-agent-friendly development.
 
+The product is **Restora**; the repository keeps its original name,
+`agentops-incident-hub`, as does the database schema, `agentops`. Both are
+identifiers, not brand.
+
 ## Features
 
 - Supabase Postgres with row level security, triggers and SQL functions
@@ -99,6 +103,16 @@ python scripts/triage_pipeline.py INC-1042
 ```
 
 The report is written under `artifacts/`.
+
+## Status
+
+Built and verified: incidents, alerts, on-call, status pages, post-incident,
+insights, catalog, workflows, command palette, live updates, public status,
+the marketing site, the agent API, migrations, CI.
+
+Not built yet: onboarding, a settings area (custom fields, roles, API keys),
+post-mortem documents, saved views, generated database types, multi-tenancy.
+`docs/BUILDING_RESTORA.md` says why each is missing.
 
 ## Companion articles
 
