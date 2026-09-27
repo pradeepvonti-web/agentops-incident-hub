@@ -1,43 +1,68 @@
-# From AI Coding Assistant to Agentic Engineering
+# From AI Coding Assistant to Agentic Engineering: Building Systems Where AI Can Plan, Build, Validate, and Collaborate
 
-*What actually happened when I stopped describing the example and built it.*
+*The concepts from John Kim's Build with Claude Code intensive, explained one at
+a time, with what each one looked like when I used it to build a real product.*
 
-In September I sat through John Kim's two-day *Build with Claude Code*
-intensive, and for about a week afterwards I had a tidy article drafted. It had
-numbered sections. It had a diagram with an orchestrator at the top and six
-agents underneath. It explained context engineering, agentic validation, MCPs,
-skills and compound engineering in the order the course had explained them,
-with an example application I had invented to hang the ideas on.
+For the last couple of years the conversation about AI in software engineering
+has mostly been about one question: how much faster can it write code? That
+question is still fair, but it has become too narrow. The better question is:
 
-Then I did the thing the course kept telling me to do, which was to stop
-theorising and put the agent to work on a real repository. This is the article
-that came out the other side. It is less symmetrical and more useful, because
-almost every lesson below is attached to something that went wrong.
+> How do we design an engineering environment where AI can understand context,
+> use tools, do the work, validate its own output, coordinate with other agents,
+> and improve the workflow over time?
 
-## The example
+That is the shift from *AI-assisted coding* to *agentic engineering*. A coding
+assistant helps with a task. An agentic engineering system is built to
+understand a goal, gather context, choose tools, act, check itself, correct
+itself, coordinate work, and leave reusable knowledge behind.
 
-The application is called Restora now. It started as *AgentOps Incident Hub*,
-which is still the name of the repository, and it is an incident management
-platform: on-call schedules, alert routing, an incident workspace with a
-timeline and actions, a status page customers can read, a post-incident flow,
-insights. If you have used incident.io or PagerDuty you know the shape.
+I wrote a first version of this article about a week after the course, with a
+tidy diagram and an invented example application. Then I did what the course
+kept telling me to do and put the agent to work on a real repository. The
+example became a real product — **Restora**, an incident management platform
+that started life as *AgentOps Incident Hub* — and almost every concept below
+now has a story attached to it, usually one where something went wrong first.
 
-I picked incident response on purpose. It is the kind of work most engineering
-teams do badly: repetitive enough to automate, judgement-heavy enough that you
-cannot script it end to end, and full of rules that live in people's heads
-rather than in the code. That is exactly the terrain the course was describing.
+This article explains each concept in plain terms, says why it matters, and
+then shows what it actually looked like in this build. The repository is public
+at [github.com/pradeepvonti-web/agentops-incident-hub](https://github.com/pradeepvonti-web/agentops-incident-hub).
 
-What exists today is a working product, not a slide. A Postgres schema with 26
-tables and row-level security, a React app that reads and writes through
-Supabase and updates live across tabs, a FastAPI service for agents, a marketing
-site, 26 backend tests, and about 7,000 lines of frontend code. All of it was
-built with Claude Code driving and me steering, over a handful of sessions.
+---
 
-## First, I asked it to look, not build
+## The example: Restora
 
-The course's opening lesson is deceptively plain: before you ask an agent to
-change anything, ask it to understand. So the first prompt I gave against the
-repository was not "build the dashboard." It was closer to:
+Restora is the kind of product incident.io or PagerDuty sells: on-call
+schedules, alert routing and escalation, an incident workspace with a timeline,
+actions and participants, a public status page, a post-incident flow, and
+insights. What exists today is a Supabase Postgres schema with 26 tables and
+row-level security, a React application that reads and writes through Supabase
+and updates live across browser tabs, a FastAPI service for agents with an SSE
+event stream and an alert webhook, a marketing site, 26 backend tests, and
+roughly 7,000 lines of frontend code — all built with Claude Code driving and me
+steering.
+
+I chose incident response deliberately. It is repetitive enough to automate,
+judgement-heavy enough that you cannot script it end to end, and full of rules
+that live in people's heads rather than in the code. That is exactly the
+terrain agentic engineering is meant for.
+
+---
+
+## Concept 1 — Explore before you build
+
+**What it means.** The first thing you ask an agent to do in a codebase is not
+to change it. It is to understand it: what the application does, where the
+entry points are, how data flows, how it is tested, and which files matter
+most. Claude Code has a read-only *plan mode* for exactly this — the agent can
+inspect everything and modify nothing. The workflow is *observe → understand →
+verify → then act*.
+
+**Why it matters.** An agent that starts building on a wrong mental model of
+the repository produces confident, well-formatted code in the wrong place. The
+cost of ten minutes of reading is nothing compared with the cost of unwinding
+that.
+
+**What it looked like here.** My first prompt against the repository was:
 
 ```
 Explore this repository. Do not change anything.
@@ -47,196 +72,458 @@ the system, the testing strategy, and the five files I should read
 first. For every important claim, show me the file that supports it.
 ```
 
-The last line is the one that earns its keep. Without it you get a plausible
-summary. With it you get a summary you can check, and the first thing the agent
-found by checking was that my own continuous integration was red. Both jobs.
-The backend tests could not import the app because of a `sys.path` quirk in how
-`pytest` resolves packages; the frontend would not compile because
-`import.meta.env` had no type declaration. Two one-line fixes, sitting in a
-repository whose README told people to run exactly those commands.
+The last line is the one that earns its keep, and it is why the very first
+thing the agent found was that my continuous integration was red on both jobs.
+The backend tests could not import the app because of how `pytest` resolves
+packages on the path; the frontend would not compile because `import.meta.env`
+had no type declaration. Two one-line fixes, in a repository whose README told
+people to run exactly those commands. I had written a section about validation
+being the most important part of agentic engineering while my own validation
+was broken. That sentence stays in because it is the most honest one here.
 
-I had written a whole section about validation being the most important part
-of agentic engineering while my validation was broken. I have left that
-sentence in here because it is the most honest thing in the article.
+---
 
-The habit that came out of it: when the agent tells me something like
-"categorisation happens in the service layer," I reply with *show me where*.
-Confidence and correctness are different variables. In this codebase the claim
-was half true — keyword categorisation lives in a script, the category on each
-incident is stored data — and an agent that skips the distinction will happily
-add a sixth category nothing downstream understands.
+## Concept 2 — Challenge the agent
 
-## Context is the part that is not in the code
+**What it means.** Language models do not reliably signal uncertainty. A
+confident answer is not automatically a correct one, so the workflow must
+force verification: when the agent makes a claim, ask it to prove the claim
+from the source. The loop becomes *claim → evidence → verification → confirmed
+or corrected*, instead of *prompt → answer → trust*.
 
-This is the idea from the course that reorganised how I think about a
-repository.
+**Why it matters.** The goal is not to make the AI sound smart. It is to make
+the engineering process reliable, and reliability comes from checking.
 
-The rules that govern this product are not derivable from its source. Someone
-decided that incident categories are exactly five values, that executive
-summaries contain only ERROR and CRITICAL events while WARNING stays visible to
-engineers, that an incident moves through seven lifecycle statuses in order and
-never backwards. In a real company those decisions live in a Confluence page and
-one person's memory. Here they live in `docs/INCIDENT_RULES.md`, and the
-conventions for touching the code live in `CLAUDE.md`, and the agent reads both
-on every run without anyone re-explaining them in a prompt.
+**What it looked like here.** When the agent said "categorisation happens in
+the service layer," I replied with *show me where*. The claim was half true:
+keyword categorisation lives in a script (`scripts/categorize_incidents.py`),
+and the category on each incident is stored data. An agent that skips that
+distinction will happily add a sixth category that nothing downstream
+understands. The habit is cheap and I now use it on every non-trivial claim.
 
-None of that is new engineering practice. What is new is who consumes it.
-Written down, the rules are read by the thing doing the work.
+---
 
-The rule that taught me the most was the evidence rule. It was in the docs. The
-backend implemented it correctly, in a function that filtered logs to ERROR and
-CRITICAL. And the dashboard never called that function — it fetched every log
-and rendered them all under a heading that said "Evidence." Documented,
-implemented, and contradicted by the only screen anyone looked at.
+## Concept 3 — Context engineering
 
-The fix was small. The lesson was not: **a rule written in two places is a bug
-waiting to happen.** Later, when the database arrived, that rule moved into
-SQL, into one function that both clients call:
+**What it means.** Code is only part of what you need to build software
+correctly. Product requirements, architecture decisions, business rules,
+incident history, runbooks and security standards usually live in wikis,
+tickets, emails and people's heads. Context engineering is the discipline of
+bringing that knowledge to where the agent is working. Prompt engineering asks
+*what should I say?* Context engineering asks *what should the agent know?*
+
+**Why it matters.** If a rule only exists in an email, the agent will never
+see it, and it will do something reasonable-looking that violates it.
+
+**What it looked like here.** The rules that govern Restora are not derivable
+from its source. Someone decided that incident categories are exactly five
+values, that executive summaries contain only ERROR and CRITICAL events while
+WARNING stays visible to engineers, and that an incident moves through seven
+lifecycle statuses in order and never backwards. Those decisions live in
+`docs/INCIDENT_RULES.md`, `docs/PRD.md` and `docs/ARCHITECTURE.md`, and the
+agent reads them on every run without anyone re-explaining them in a prompt.
+
+The rule that taught me the most was the evidence rule. It was documented. The
+backend implemented it correctly. And the dashboard never called that function
+— it fetched every log and rendered them all under a heading that said
+"Evidence." Documented, implemented, and contradicted by the only screen anyone
+looked at. **A rule written in two places is a bug waiting to happen.** When
+the database arrived, that rule moved into one SQL function both clients call:
 
 ```sql
 where l.incident_id = i.id
   and l.level in ('ERROR', 'CRITICAL')
 ```
 
-And it grew company. A trigger on the incidents table writes a timeline entry
-whenever status or severity changes, so no client can forget to log one. The
-multi-step writes — declare an incident, post an update that moves the status,
-escalate an alert — became single transactional functions. The convention that
-emerged, and that is now in `CLAUDE.md`, is that anything which must hold no
-matter who writes belongs in the database, not in a client. That sentence is
-the compound-engineering loop the course describes, observed in the wild: a bug
-became a rule, the rule became a convention, the convention became a test and a
-checkbox in the eval. The next agent to touch that screen inherits all of it.
+---
 
-## Tools, and the one time the tool was me
+## Concept 4 — Durable context: `CLAUDE.md`
 
-The course's framing of tooling is that when an agent cannot reach something,
-you give it an interface rather than declaring the task impossible. I expected
-that lesson to be about the small API endpoint I added so an agent can fetch
-raw logs without a human downloading a file. It turned out to be about MCP, and
-about the limits of MCP.
+**What it means.** `CLAUDE.md` is a file at the root of the repository that
+Claude Code loads at the start of every session. It holds the project's
+conventions, rules and validation requirements so they are asked once, written
+down, and reused. The course frames it as storing *machine-consumable
+engineering intent* alongside the code.
 
-The entire database was built through Supabase's MCP server. Fifteen migrations
-— types, tables, functions, triggers, policies, seed data, views — applied from
-the agent's session without me opening a SQL editor. The same server exposed a
-security advisor, and after the row-level security migration the agent ran it
-and found that the anonymous role had been granted `SELECT` on every table.
-The policies blocked the reads, but the tables were still discoverable through
-GraphQL introspection. The grants were narrowed to the three status-page tables
-in the next migration. An agent with a linter is a different thing from an agent
-with a text editor.
+**Why it matters.** Without it, every session starts from zero and every
+engineer re-explains the same conventions in prompts, inconsistently.
 
-Then it hit two walls no tool could climb. Supabase's REST layer only serves
-schemas listed in a project setting, and there is no API for that setting; a
-human had to open the dashboard and add `agentops` to a list. And when I signed
-up to test the app, the confirmation email hit the shared SMTP rate limit,
-because the demo domain does not receive mail — again a dashboard toggle, again
-me. The agent's job at those moments was to say precisely what was blocked and
-why, and it did: the SSE stream it had built reported `Invalid schema:
-agentops` verbatim. The human is the tool of last resort, and a good system
-tells you clearly when it is your turn.
+**What it looked like here.** Restora's `CLAUDE.md` names the architecture, the
+canonical categories and severities, the lifecycle order, and a list of
+conventions that grew as the build did: every Supabase read and write goes
+through `frontend/src/lib/data.ts`; forms wrap submits in `useSubmit`; a rule
+that must hold no matter who writes belongs in SQL; new tables need RLS
+policies in the same migration; demo media is generated by scripts, never
+edited by hand; green is the brand and orange is reserved for urgency. Each of
+those lines exists because the agent did it a different way once. It also ends
+with a *context discipline* loop, which is Concept 15 in miniature.
 
-## Let the deterministic thing be deterministic
+---
 
-Incident triage follows the same six steps every time, so it is a Python script,
-and a skill file tells the agent when to run it and what to check afterwards.
-That part matched the course exactly. The surprise was how often the same
-principle applied to work I would have called creative.
+## Concept 5 — An agentic codebase
 
-The landing page has four videos on it and none was filmed. The agent wrote a
-script that draws every frame of one incident — declared, investigated, rolled
-back, closed, customer notified — with Pillow, and encodes it with ffmpeg.
-Change the story, re-run the script, new video. When I wanted a logo tile as a
-PNG, the agent tried to draw the arc with Pillow twice, produced a notch both
-times, and switched to a proper SVG rasteriser on the third attempt. The right
-move was not a smarter drawing; it was a better tool.
+**What it means.** Enterprise codebases accumulate years of history: three
+HTTP clients, severity spelled `"critical"`, `"CRITICAL"` and `1`, dead code,
+forking paths. A human knows which pattern is current. An agent sees several
+valid-looking choices. An agentic codebase is consistent, explicit, well-tested,
+easy to navigate, and clear about its canonical patterns.
 
-The model orchestrates and interprets. The scripts do the arithmetic. Pushing
-arithmetic into a language model buys you variance where you specifically do
-not want any.
+**Why it matters.** Competing patterns are the single most reliable way to get
+an agent to produce plausible code that is wrong for *this* repository.
 
-## Validation, and knowing where it stops
+**What it looked like here.** The `architecture-review` skill exists to hunt
+for exactly this: entry points, data flow, boundaries, competing patterns and
+dead code, with a file cited for every finding. Concretely, the codebase has
+one `SeverityBadge` component and no other severity representation, one
+`Logo` component, one data module, and a single `ACTIVE_STATUSES` constant in
+`backend/app/models.py` that nothing else re-derives. When the marketing site
+was added it got its own folder and a rule that animations opt in through
+data attributes rather than ad-hoc calls scattered across pages.
 
-The course demonstrates an agent that runs the application, opens a browser,
-walks the workflow, sees the result and fixes what broke. I was sceptical of how
-much of that was demo. It is real, with a caveat I only found by doing it.
+---
 
-The eval file in the repository is a checklist: filters return the right counts,
-the executive summary shows only the allowed severities, a change in one tab
-appears in another without a reload, nothing clips at desktop width, mobile is
-usable. The agent walked that list in a browser and found things no unit test
-would: a table that squeezed to unreadable at 800 pixels instead of scrolling,
-severity badges stretched to fill their grid cell, timestamps wrapping onto two
-lines. Three lines of CSS each. Then it found that the browser pane it was
-using throttles animation frames to one per second when unfocused — so every
-motion on the marketing page looked broken in its screenshots while being fine
-in mine. It measured that, reported it, and stopped claiming to have verified
-what it could not see.
+## Concept 6 — Skills: package repeated workflows
 
-That last part is the whole point. Validation that knows its own limits is
-worth more than validation that reports green.
+**What it means.** A skill is a reusable, named procedure the agent can run —
+a `SKILL.md` file describing the steps, invoked as a slash command. The course's
+guidance is to *do the workflow manually once, then package it*. The
+architectural point underneath is that the AI should orchestrate deterministic
+scripts, not replace them: use code for predictable transformations and the
+agent for reasoning, exception handling and choosing what to do next.
 
-The backend tests, incidentally, run with no credentials on purpose. They
-assert what the service does when Supabase is *not* configured — the webhook
-returns 503 naming the missing variable, the stream emits one error and closes
-— because that is the state every fresh clone and every CI run starts in.
+**Why it matters.** Pushing arithmetic into a language model buys you variance
+exactly where you do not want any. A script gives the same answer every time;
+a skill makes sure the agent runs it the same way every time.
 
-## Design before code, and a target that moved
+**What it looked like here.** Incident triage is the same six steps every
+time — retrieve logs, parse, filter severity, categorise, aggregate service
+impact, generate the report — so it is `scripts/triage_pipeline.py`, and
+`skills/triage-incident/SKILL.md` tells the agent when to run it and to
+validate the output against the rules file without inventing evidence. The
+same principle reached into work I would have called creative: the four
+videos on the landing page were never filmed. A script draws every frame of
+one incident with Pillow and encodes it with ffmpeg. When I wanted a logo
+tile as a PNG, the agent's hand-drawn arc had a notch twice; the fix was a
+proper SVG rasteriser, not a cleverer drawing. The right move was a better
+tool.
 
-Rather than invent a UI, I gave the agent five hundred screenshots of a real
-incident product from late 2024 and asked it to build to that. It sampled the
-images, pulled the exact accent colour and chrome greys out of the pixels, and
-rebuilt the structure — sidebar, lifecycle breadcrumb, metadata rail, timeline —
-with our own name and copy. Then I asked it to compare against the live site.
+---
 
-The company had rebranded in the meantime. Dark to white, bold sans to a
-regular-weight serif, rounded rectangles to pills, a new pitch. The agent read
-the computed styles off the live page — heading size, tracking, button padding,
-the exact background of the product stage — and rebuilt again to that. It also
-noted, unprompted, that chasing another company's current design is a
-treadmill, and that copying their slogan or logo would be passing off their
-brand. We kept the structure and wrote everything else ourselves.
+## Concept 7 — Agentic tooling: give the agent an interface
 
-The name went the same way. My first choice, Restor, turned out to be a
-well-known conservation platform with the `.com`, the `.ai`, the GitHub handle
-and the npm package all taken. The agent checked the registries the way it
-checks anything else, and I picked Restora instead, whose `.io` was free.
-Tooling again, applied to a decision I would have made on instinct.
+**What it means.** Eventually the agent hits a boundary — data it can only get
+by a human clicking "Download" on an internal page. That is not an
+inconvenience; it is a tooling gap. The course's rule: if the agent cannot
+reach something, give it a tool — an API, a CLI, a browser, a database
+connection.
 
-## What I did not do
+**Why it matters.** Every boundary the agent cannot cross puts a human back in
+the loop for a mechanical step, which is the exact work you were trying to
+remove.
 
-I ran one agent, not a team. The course's sessions on worktrees and parallel
-development are the part of the framework I have not exercised, and I would
-rather say that than draw the diagram. Everything in this article is a single
-agent with a human beside it, which is enough to learn the shape of the thing.
+**What it looked like here.** Restora's FastAPI service exists for agents, not
+humans: `GET /api/v1/incidents/{id}/logs` returns the raw events, `/report`
+returns the filtered executive view, `/api/v1/stream` is a server-sent event
+feed of database changes, and `/api/v1/webhooks/alerts` lets a monitoring
+system open an alert. The workflow changed from *human downloads file → hands
+it to agent* to *agent requests logs → continues automatically*.
 
-The product is missing what the reference has and this does not: onboarding,
-a settings area, post-mortem documents, saved views. The frontend casts its
-database results through a helper instead of generated types, which was the
-right trade while the schema was moving and is the wrong one now. All of it is
-written down in the repository, because the next agent to open it should not
-have to rediscover any of it.
+---
+
+## Concept 8 — MCP: the agent beyond the repository
+
+**What it means.** The Model Context Protocol is a standard way to plug
+external systems into the agent as tools: databases, design tools,
+observability, ticketing. Through MCP the agent gains eyes, ears and hands on
+the operating environment, not just the source tree.
+
+**Why it matters.** Most engineering work involves systems that are not files.
+Without MCP the agent can only describe what to do in those systems; with it,
+the agent does it.
+
+**What it looked like here.** The entire database was built through Supabase's
+MCP server. Fifteen migrations — types, tables, functions, triggers, policies,
+seed data, views — were applied from the agent's session without me opening a
+SQL editor, then exported verbatim to `supabase/migrations/` so anyone can
+reproduce them with `supabase db push`. The same server exposes a security
+advisor, and after the row-level security migration the agent ran it and found
+that the anonymous role still had `SELECT` granted on every table. The
+policies blocked the reads, but the tables were discoverable through GraphQL
+introspection. The next migration narrowed the grants to the three status-page
+tables. **An agent with a linter is a different thing from an agent with a text
+editor.**
+
+MCP also has a ceiling, and it is worth knowing where. Supabase's REST layer
+only serves schemas listed in a project setting with no API behind it; a human
+had to open the dashboard and add `agentops` to a list. When the signup
+confirmation email hit the shared SMTP rate limit, that was a dashboard toggle
+too. The agent's job at those moments was to say precisely what was blocked and
+why — the SSE stream reported `Invalid schema: agentops` verbatim — and it did.
+The human is the tool of last resort, and a good system tells you clearly when
+it is your turn.
+
+---
+
+## Concept 9 — Design before code
+
+**What it means.** The naive flow is *PRD → code → repeated UI rework*. The
+better flow is *PRD → design → code*: get high-fidelity screens in front of a
+human first, then hand the agent the PRD plus the designs plus the architecture
+rules plus the project conventions. That is far richer context than "build me
+a dashboard."
+
+**Why it matters.** UI is where vague prompts produce the most expensive
+churn, because every reviewer has an opinion and none of them were in the
+prompt.
+
+**What it looked like here.** Rather than invent a UI I gave the agent five
+hundred screenshots of a real incident product and asked it to build to that.
+It sampled the images, pulled the exact accent colour and chrome greys out of
+the pixels, and rebuilt the structure — sidebar, lifecycle breadcrumb, metadata
+rail, timeline — with our own name and copy. When I asked it to compare with
+the company's live site, it discovered they had rebranded, read the computed
+styles off the live page and rebuilt again. It also noted, unprompted, that
+copying a competitor's slogan or logo would be passing off their brand; we
+kept the structure and wrote everything else ourselves. The product name went
+through the same tooling: my first choice turned out to be a well-known
+platform with every registry taken, and the agent checked them the way it
+checks anything else.
+
+---
+
+## Concept 10 — Agentic validation
+
+**What it means.** Traditional AI coding is *AI generates → human checks
+everything*. Agentic validation is *AI generates → runs the application → opens
+a browser → walks the workflow → captures evidence → detects the issue → fixes
+it → re-validates*. The agent observes the consequences of its own work, which
+turns generation into a feedback loop.
+
+**Why it matters.** This is the progression that changes the economics. Code
+the agent has verified in a running system is code a human can review rather
+than re-test.
+
+**What it looked like here.** The agent walked the eval checklist in a browser
+and found things no unit test would: a table that squeezed to unreadable at
+800 pixels instead of scrolling, severity badges stretched to fill their grid
+cell, timestamps wrapping onto two lines. Three lines of CSS each. Then it
+discovered that the browser pane it was using throttles animation frames to
+one per second when unfocused, so every motion on the marketing page looked
+broken in its screenshots while being fine in mine. It measured that, reported
+it, and stopped claiming to have verified what it could not see. **Validation
+that knows its own limits is worth more than validation that reports green.**
+
+The backend tests run with no credentials on purpose: they assert what the
+service does when Supabase is *not* configured — the webhook returns 503
+naming the missing variable, the stream emits one error and closes — because
+that is the state every fresh clone and every CI run starts in.
+
+---
+
+## Concept 11 — Objective evals
+
+**What it means.** Some validation is objective (a unit test has an answer);
+some is subjective (visual quality). Evals make the subjective measurable by
+writing down explicit criteria in advance, so the question changes from *does
+this look okay?* to *did the implementation satisfy the defined checks?*
+
+**Why it matters.** Without a written checklist, "validated" means whatever the
+agent happened to look at.
+
+**What it looked like here.** `evals/dashboard-eval.md` is organised into Auth,
+Navigation, Home, Incidents, Incident detail, Writes, Visual and Quality:
+filters return the right counts, the executive summary shows only the allowed
+severities, a change in one tab appears in another without a reload, nothing
+clips at desktop width, mobile is usable, no console errors, no failed
+requests. `skills/validate-dashboard/SKILL.md` tells the agent to start the
+servers, execute every check section by section, capture evidence into
+`screenshots/`, fix the smallest relevant thing when a check fails, and
+produce a report. The checklist grew a *Writes* section when the app gained
+writes, which is the point: the eval is a living contract, not a one-time QA
+pass.
+
+---
+
+## Concept 12 — Parallel development: subagents and agent teams
+
+**What it means.** Once one agent works reliably, the next lever is scale.
+Claude Code offers *subagents* (one-off helpers spawned for a bounded task,
+with their own context window) and *agent teams* (several long-running agents
+sharing context and coordinating on interdependent work). The picture the
+course draws is an orchestrator over a backend agent, a frontend agent and a
+QA agent, all reading the same shared context.
+
+**Why it matters.** Backend, frontend, tests and documentation are separable
+work streams; running them in parallel is where "AI pair programming" becomes
+something closer to AI team orchestration.
+
+**What it looked like here.** Honestly: I ran one agent, not a team. The build
+was sequential, one session at a time, with me beside it. I would rather say
+that than draw the diagram. The repository is *shaped* for it — `CLAUDE.md`,
+the docs and the evals are the shared context a team would need — but the
+sessions on worktrees and parallel development are the part of the framework
+I have not exercised.
+
+---
+
+## Concept 13 — Worktrees for isolation
+
+**What it means.** Parallel agents need separation. A git worktree gives each
+agent its own checkout of its own branch inside the same repository, so a
+backend agent and a frontend agent cannot overwrite each other's files, and a
+human or an orchestrator merges validated work.
+
+**Why it matters.** Parallelism without isolation creates chaos. This is where
+ordinary software-engineering discipline becomes *more* important with agents,
+not less.
+
+**What it looked like here.** Not exercised, for the same reason as Concept 12.
+Everything landed on `main` through a single sequence of commits with CI
+running on each push. That was the right choice for one agent; it would be the
+wrong one for three.
+
+---
+
+## Concept 14 — Human attention is the bottleneck
+
+**What it means.** With one agent, watching it is easy. With several, the
+human's attention becomes the scarce resource, so the system should interrupt
+only when it matters: the agent finished, failed, needs approval, found an
+ambiguity, found a security risk, or cannot pass validation. The engineer's
+role shifts from typing to orchestrating, reviewing, architecting and deciding.
+
+**Why it matters.** If every agent demands the same attention as a pair
+programmer, running five of them buys you nothing.
+
+**What it looked like here.** Even with one agent, the moments that needed me
+were exactly the ones on that list: a dashboard setting with no API, a rate
+limit, a cost decision (reuse an existing Supabase project with its own schema
+rather than pay for a new one), a design direction ("green, not orange"; "add
+orange back"), a product name, a logo I rejected. Everything else — the
+migrations, the tests, the CSS fixes, the videos — I reviewed after the fact.
+Less time watching terminals, more time on judgement, which is what the course
+promised.
+
+---
+
+## Concept 15 — Compound engineering
+
+**What it means.** Every solved problem should make the next one easier. The
+chain is *problem → learning → rule → skill → tool → automation → reusable
+capability*. The output of engineering work is no longer just code; it is also
+rules, skills, tools, evaluation criteria and architectural knowledge, and
+those compound.
+
+**Why it matters.** This is the difference between an organisation that gets
+faster with agents and one that just gets busier.
+
+**What it looked like here.** The evidence bug from Concept 3 is the cleanest
+example. A bug became a rule in `docs/INCIDENT_RULES.md`. The rule became a
+convention in `CLAUDE.md` — *never re-filter severity in the UI; render the
+report endpoint*. The convention became a test, a checkbox in the eval, and
+finally a SQL function that both clients call. It grew company: a trigger on
+the incidents table writes a timeline entry whenever status or severity
+changes, so no client can forget; multi-step writes — declare an incident, post
+an update that moves the status, escalate an alert — became single
+transactional functions. The next agent to touch that screen inherits all of
+it. The *context discipline* block at the end of `CLAUDE.md` is the loop
+written down: verify the rule, put it in `docs/`, update the implementation and
+tests, update the skill, and if the rule lives in the database, add a
+migration.
+
+---
+
+## The five pillars
+
+Everything above collapses into five things the environment around the model
+has to provide:
+
+1. **Context engineering** — the right knowledge at the right time; not the
+   most context, the right context. (Concepts 1–4)
+2. **Agentic validation** — objective ways for the agent to know whether its
+   work succeeded: tests, browser automation, screenshots, logs, evals.
+   (Concepts 10–11)
+3. **Agentic tooling** — interfaces to the systems it needs: APIs, CLIs, MCP,
+   browsers, databases. (Concepts 7–8)
+4. **Agentic codebase** — a repository that is easy for agents to understand:
+   fewer competing patterns and dead code, more explicit contracts, tests and
+   documentation. (Concepts 5–6)
+5. **Compound engineering** — repeated work turned into reusable capability.
+   (Concepts 12–15)
+
+---
+
+## The repository, stage by stage
+
+The repository is laid out so a reader can follow the same path:
+
+```
+agentops-incident-hub/
+├── CLAUDE.md                  durable context (Concept 4)
+├── docs/                      PRD, rules, architecture, API contract (Concept 3)
+├── backend/                   FastAPI agent API, SSE, webhooks, tests (Concepts 7, 10)
+├── frontend/                  React app and marketing site (Concept 9)
+├── supabase/migrations/       the database, applied through MCP (Concept 8)
+├── scripts/                   deterministic pipeline and media renderers (Concept 6)
+├── skills/                    triage-incident, architecture-review, validate-dashboard
+├── evals/                     dashboard-eval, incident-report-eval (Concept 11)
+└── sample-data/               offline fixture the API and tests run on
+```
+
+The stages, and which ones this build actually went through:
+
+| Stage | What it means | Done here |
+|---|---|---|
+| 1 Explore | Understand the repository before touching it | Yes |
+| 2 Engineer context | Add PRD, rules, architecture docs | Yes |
+| 3 Clean the codebase | Remove competing patterns | Yes |
+| 4 Deterministic tools | Scripts for repeatable transformations | Yes |
+| 5 Create skills | Package repeated workflows | Yes |
+| 6 APIs and MCP | Give the agent access to external systems | Yes |
+| 7 Design before code | Generate and review UI first | Yes |
+| 8 Self-validation | Browser checks, screenshots, evals | Yes |
+| 9 Parallel agents | Split backend, frontend, QA, docs | No |
+| 10 Worktrees | Isolate concurrent development | No |
+| 11 Capture learning | Turn new knowledge into rules and skills | Yes |
+| 12 Compound | Make each run improve the next | Yes, on a small scale |
+
+`docs/BUILD_WITH_CLAUDE_CODE.md` walks each stage with the prompts used;
+`docs/BUILDING_RESTORA.md` walks the codebase file by file.
+
+---
+
+## The bigger shift
+
+For years the model was *developer + IDE + code*, then *developer + AI
+copilot*. The next one looks like an engineer above an orchestrator above a set
+of agents — development, testing, security, data, documentation, operations.
+The engineer does not disappear; the engineer's leverage changes. The
+high-value skills become architecture, specification quality, context
+engineering, validation design, tooling, orchestration and judgement. Coding
+still matters, but the higher-order skill is designing an environment in
+which AI systems produce reliable engineering outcomes.
 
 ## What I actually think now
 
 The article I drafted after the course was about how much faster an agent
 could write code. The one I can defend after building with it is about
-something else: whether the environment around the model is good enough that
-its output can be trusted without someone reading every line.
+whether the environment around the model is good enough that its output can be
+trusted without someone reading every line.
 
 That means context the agent can reach, tools it can call, rules it cannot
 silently violate, tests that go red when it does, and a record — in docs, in
-skills, in SQL — of what was learned the last time. Most of that is ordinary
+skills, in SQL — of what was learned last time. Most of that is ordinary
 engineering discipline, which is the slightly deflating conclusion. The
 practices that make a codebase good for agents are the ones that make it good
 for people, held to more strictly than we usually bother.
 
-My repository failed that standard on the first day, in two places, while I was
-writing about it. That is where the technology is: the ideas are right, and the
-work is still work.
-
-The repository is public at https://github.com/pradeepvonti-web/agentops-incident-hub. The companion
-piece, `docs/BUILDING_RESTORA.md`, walks the codebase file by file.
+Give the model context, so it knows what matters. Tools, so it can act.
+Validation, so it can verify. Structure, so agents can collaborate. Memory and
+reusable skills, so the organisation improves over time. That is the
+difference between using AI in software engineering and redesigning software
+engineering around AI — and my repository failed that standard on its first
+day, in two places, while I was writing about it. That is where the technology
+is: the ideas are right, and the work is still work.
 
 ---
 
