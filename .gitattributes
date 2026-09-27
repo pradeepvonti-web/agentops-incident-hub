@@ -1,0 +1,6 @@
+# Normalise line endings so Windows and Unix checkouts produce identical diffs.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.mp4 binary
+*.webm binary
