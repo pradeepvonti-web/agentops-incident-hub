@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+.pytest_cache/
+node_modules/
+dist/
+*.tsbuildinfo
+artifacts/*
+!artifacts/.gitkeep
+screenshots/*
+!screenshots/.gitkeep
+.env
+.env.local
+.DS_Store

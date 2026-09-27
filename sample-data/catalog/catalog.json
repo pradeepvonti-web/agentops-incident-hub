@@ -1,0 +1,149 @@
+{
+  "services": [
+    {
+      "id": "checkout-api",
+      "name": "Checkout API",
+      "team": "Payments",
+      "tier": "Tier 1",
+      "owner": "Priya Raman",
+      "escalation_path": "Payments primary",
+      "open_incidents": 1
+    },
+    {
+      "id": "catalog-search",
+      "name": "Catalog Search",
+      "team": "Discovery",
+      "tier": "Tier 1",
+      "owner": "Dana Okafor",
+      "escalation_path": "Discovery primary",
+      "open_incidents": 1
+    },
+    {
+      "id": "identity",
+      "name": "Identity",
+      "team": "Platform",
+      "tier": "Tier 1",
+      "owner": "Priya Raman",
+      "escalation_path": "Platform primary",
+      "open_incidents": 0
+    },
+    {
+      "id": "order-ingestion",
+      "name": "Order Ingestion",
+      "team": "Orders",
+      "tier": "Tier 2",
+      "owner": "Sam Lee",
+      "escalation_path": "Orders primary",
+      "open_incidents": 1
+    },
+    {
+      "id": "partner-gateway",
+      "name": "Partner Gateway",
+      "team": "Integrations",
+      "tier": "Tier 2",
+      "owner": "Alex Moreau",
+      "escalation_path": "Integrations primary",
+      "open_incidents": 1
+    },
+    {
+      "id": "inventory-sync",
+      "name": "Inventory Sync",
+      "team": "Orders",
+      "tier": "Tier 2",
+      "owner": "Dana Okafor",
+      "escalation_path": "Orders primary",
+      "open_incidents": 1
+    },
+    {
+      "id": "profile",
+      "name": "Profile",
+      "team": "Platform",
+      "tier": "Tier 2",
+      "owner": "Dana Okafor",
+      "escalation_path": "Platform primary",
+      "open_incidents": 1
+    },
+    {
+      "id": "reporting",
+      "name": "Reporting",
+      "team": "Data",
+      "tier": "Tier 3",
+      "owner": "Sam Lee",
+      "escalation_path": "Data primary",
+      "open_incidents": 0
+    }
+  ],
+  "teams": [
+    {
+      "id": "payments",
+      "name": "Payments",
+      "members": [
+        "Priya Raman",
+        "Sam Lee"
+      ],
+      "slack_channel": "#team-payments",
+      "services": [
+        "checkout-api"
+      ]
+    },
+    {
+      "id": "discovery",
+      "name": "Discovery",
+      "members": [
+        "Dana Okafor"
+      ],
+      "slack_channel": "#team-discovery",
+      "services": [
+        "catalog-search"
+      ]
+    },
+    {
+      "id": "platform",
+      "name": "Platform",
+      "members": [
+        "Priya Raman",
+        "Dana Okafor"
+      ],
+      "slack_channel": "#team-platform",
+      "services": [
+        "identity",
+        "profile"
+      ]
+    },
+    {
+      "id": "orders",
+      "name": "Orders",
+      "members": [
+        "Sam Lee",
+        "Dana Okafor"
+      ],
+      "slack_channel": "#team-orders",
+      "services": [
+        "order-ingestion",
+        "inventory-sync"
+      ]
+    },
+    {
+      "id": "integrations",
+      "name": "Integrations",
+      "members": [
+        "Alex Moreau"
+      ],
+      "slack_channel": "#team-integrations",
+      "services": [
+        "partner-gateway"
+      ]
+    },
+    {
+      "id": "data",
+      "name": "Data",
+      "members": [
+        "Sam Lee"
+      ],
+      "slack_channel": "#team-data",
+      "services": [
+        "reporting"
+      ]
+    }
+  ]
+}

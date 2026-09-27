@@ -1,0 +1,168 @@
+{
+  "id": "INC-1044",
+  "title": "Expired auth signing key",
+  "service": "identity",
+  "severity": "CRITICAL",
+  "category": "Security",
+  "status": "Closed",
+  "summary": "The active JWT signing key expired before its replacement was promoted, rejecting 40% of authentication attempts.",
+  "lead": "Priya Raman",
+  "reporter": "Dana Okafor",
+  "participants": [
+    "Priya Raman",
+    "Dana Okafor",
+    "Sam Lee"
+  ],
+  "affected_components": [
+    "Identity",
+    "API Gateway"
+  ],
+  "first_occurrence": "2026-09-26T15:10:00Z",
+  "latest_occurrence": "2026-09-26T15:44:00Z",
+  "timestamps": {
+    "impact_started_at": "2026-09-26T15:08:00Z",
+    "declared_at": "2026-09-26T15:12:00Z",
+    "identified_at": "2026-09-26T15:19:00Z",
+    "fixed_at": "2026-09-26T15:44:00Z",
+    "closed_at": "2026-09-26T16:30:00Z"
+  },
+  "probable_cause": "The active signing key expired before the replacement key was promoted.",
+  "suggested_next_action": "Verify rotation automation and add an alert for keys expiring within seven days.",
+  "logs": [
+    {
+      "timestamp": "2026-09-26T15:10:00Z",
+      "level": "ERROR",
+      "message": "token validation failed: signing key expired"
+    },
+    {
+      "timestamp": "2026-09-26T15:11:00Z",
+      "level": "CRITICAL",
+      "message": "authentication failures exceed 40 percent"
+    },
+    {
+      "timestamp": "2026-09-26T15:44:00Z",
+      "level": "INFO",
+      "message": "new signing key promoted successfully"
+    }
+  ],
+  "updates": [
+    {
+      "timestamp": "2026-09-26T15:15:00Z",
+      "author": "Priya Raman",
+      "status": "Investigating",
+      "severity": "CRITICAL",
+      "message": "Authentication failures across all clients. Checking key rotation state.",
+      "next_update_in_minutes": 15
+    },
+    {
+      "timestamp": "2026-09-26T15:45:00Z",
+      "author": "Priya Raman",
+      "status": "Monitoring",
+      "severity": "CRITICAL",
+      "message": "Replacement key promoted. Error rate back to zero.",
+      "next_update_in_minutes": 30
+    },
+    {
+      "timestamp": "2026-09-26T16:30:00Z",
+      "author": "Priya Raman",
+      "status": "Closed",
+      "severity": "CRITICAL",
+      "message": "Post-mortem published, follow-ups assigned.",
+      "next_update_in_minutes": null
+    }
+  ],
+  "timeline": [
+    {
+      "timestamp": "2026-09-26T15:10:00Z",
+      "kind": "alert",
+      "title": "Alert fired: authentication error rate",
+      "detail": "Urgent priority, paged Identity on-call.",
+      "author": "AgentOps"
+    },
+    {
+      "timestamp": "2026-09-26T15:12:00Z",
+      "kind": "declared",
+      "title": "Incident declared",
+      "detail": "Declared at CRITICAL by Dana Okafor.",
+      "author": "Dana Okafor"
+    },
+    {
+      "timestamp": "2026-09-26T15:19:00Z",
+      "kind": "status",
+      "title": "Cause identified",
+      "detail": "Signing key expired at 15:08 UTC; replacement never promoted.",
+      "author": "Priya Raman"
+    },
+    {
+      "timestamp": "2026-09-26T15:44:00Z",
+      "kind": "status",
+      "title": "Fixed",
+      "detail": "New signing key promoted successfully.",
+      "author": "Priya Raman"
+    },
+    {
+      "timestamp": "2026-09-26T16:30:00Z",
+      "kind": "closed",
+      "title": "Incident closed",
+      "detail": "Post-mortem published.",
+      "author": "Priya Raman"
+    }
+  ],
+  "actions": [
+    {
+      "id": "ACT-5",
+      "description": "Promote replacement signing key",
+      "owner": "Priya Raman",
+      "status": "Done"
+    }
+  ],
+  "follow_ups": [
+    {
+      "id": "FU-3",
+      "title": "Alert on signing keys expiring within 7 days",
+      "owner": "Priya Raman",
+      "status": "Done",
+      "priority": "High",
+      "due": "2026-09-30"
+    },
+    {
+      "id": "FU-4",
+      "title": "Add rotation smoke test to the identity pipeline",
+      "owner": "Sam Lee",
+      "status": "Open",
+      "priority": "High",
+      "due": "2026-10-08"
+    }
+  ],
+  "post_incident_tasks": [
+    {
+      "id": "PI-1",
+      "title": "Review the incident timeline",
+      "status": "Done",
+      "owner": "Priya Raman",
+      "due": null
+    },
+    {
+      "id": "PI-2",
+      "title": "Create the post-mortem",
+      "status": "Done",
+      "owner": "Priya Raman",
+      "due": null
+    },
+    {
+      "id": "PI-3",
+      "title": "Schedule the debrief",
+      "status": "Done",
+      "owner": "Dana Okafor",
+      "due": null
+    },
+    {
+      "id": "PI-4",
+      "title": "Share the post-mortem",
+      "status": "Done",
+      "owner": "Priya Raman",
+      "due": null
+    }
+  ],
+  "related_incidents": []
+}

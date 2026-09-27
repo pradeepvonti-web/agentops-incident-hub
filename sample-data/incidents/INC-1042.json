@@ -1,0 +1,142 @@
+{
+  "id": "INC-1042",
+  "title": "Checkout API unavailable",
+  "service": "checkout-api",
+  "severity": "CRITICAL",
+  "category": "Availability",
+  "status": "Fixing",
+  "summary": "Customers cannot complete checkout. Checkout instances fail to reach the payments dependency and health checks are flapping.",
+  "lead": "Sam Lee",
+  "reporter": "Alex Moreau",
+  "participants": [
+    "Sam Lee",
+    "Alex Moreau",
+    "Priya Raman"
+  ],
+  "affected_components": [
+    "Checkout",
+    "Payments"
+  ],
+  "first_occurrence": "2026-09-26T18:02:00Z",
+  "latest_occurrence": "2026-09-26T18:15:00Z",
+  "timestamps": {
+    "impact_started_at": "2026-09-26T18:00:00Z",
+    "declared_at": "2026-09-26T18:04:00Z",
+    "identified_at": "2026-09-26T18:09:00Z",
+    "fixed_at": null,
+    "closed_at": null
+  },
+  "probable_cause": "Checkout instances cannot establish connections to the payments dependency.",
+  "suggested_next_action": "Check payments service health and recent network or deployment changes before restarting checkout instances.",
+  "related_incidents": [
+    "INC-1046"
+  ],
+  "logs": [
+    {
+      "timestamp": "2026-09-26T18:02:00Z",
+      "level": "WARNING",
+      "message": "payments latency exceeded 900ms"
+    },
+    {
+      "timestamp": "2026-09-26T18:03:00Z",
+      "level": "ERROR",
+      "message": "payments connection refused for request 82a1"
+    },
+    {
+      "timestamp": "2026-09-26T18:03:00Z",
+      "level": "CRITICAL",
+      "message": "checkout health check failed: payments unavailable"
+    },
+    {
+      "timestamp": "2026-09-26T18:15:00Z",
+      "level": "ERROR",
+      "message": "payments connection refused for request 83cc"
+    }
+  ],
+  "updates": [
+    {
+      "timestamp": "2026-09-26T18:05:00Z",
+      "author": "Sam Lee",
+      "status": "Investigating",
+      "severity": "CRITICAL",
+      "message": "Checkout is failing for all regions. Paging the payments on-call now.",
+      "next_update_in_minutes": 15
+    },
+    {
+      "timestamp": "2026-09-26T18:12:00Z",
+      "author": "Priya Raman",
+      "status": "Fixing",
+      "severity": "CRITICAL",
+      "message": "Payments connection pool was exhausted after the 17:50 deploy. Rolling back.",
+      "next_update_in_minutes": 15
+    }
+  ],
+  "timeline": [
+    {
+      "timestamp": "2026-09-26T18:02:00Z",
+      "kind": "alert",
+      "title": "Alert fired: checkout health check failing",
+      "detail": "Routed to Payments on-call via the Checkout alert route.",
+      "author": "AgentOps"
+    },
+    {
+      "timestamp": "2026-09-26T18:04:00Z",
+      "kind": "declared",
+      "title": "Incident declared",
+      "detail": "Declared at CRITICAL by Alex Moreau.",
+      "author": "Alex Moreau"
+    },
+    {
+      "timestamp": "2026-09-26T18:05:00Z",
+      "kind": "update",
+      "title": "Update shared",
+      "detail": "Checkout is failing for all regions. Paging the payments on-call now.",
+      "author": "Sam Lee"
+    },
+    {
+      "timestamp": "2026-09-26T18:09:00Z",
+      "kind": "status",
+      "title": "Status changed from Investigating to Fixing",
+      "detail": "Root cause identified in the payments connection pool.",
+      "author": "Priya Raman"
+    },
+    {
+      "timestamp": "2026-09-26T18:15:00Z",
+      "kind": "action",
+      "title": "Action assigned: roll back payments 4.12.0",
+      "detail": "Owner: Priya Raman",
+      "author": "Sam Lee"
+    }
+  ],
+  "actions": [
+    {
+      "id": "ACT-1",
+      "description": "Roll back payments 4.12.0",
+      "owner": "Priya Raman",
+      "status": "Open"
+    },
+    {
+      "id": "ACT-2",
+      "description": "Drain and restart checkout pods in eu-west",
+      "owner": "Sam Lee",
+      "status": "Open"
+    },
+    {
+      "id": "ACT-3",
+      "description": "Post customer-facing status update",
+      "owner": "Alex Moreau",
+      "status": "Done"
+    }
+  ],
+  "follow_ups": [
+    {
+      "id": "FU-1",
+      "title": "Add connection-pool saturation alert to payments",
+      "owner": "Priya Raman",
+      "status": "Open",
+      "priority": "High",
+      "due": "2026-10-03"
+    }
+  ],
+  "post_incident_tasks": []
+}

@@ -1,0 +1,122 @@
+{
+  "id": "INC-1048",
+  "title": "Elevated 5xx on profile service",
+  "service": "profile",
+  "severity": "ERROR",
+  "category": "Availability",
+  "status": "Reviewing",
+  "summary": "Profile reads returned 5xx for 18 minutes after a bad cache configuration reached production.",
+  "lead": "Dana Okafor",
+  "reporter": "Priya Raman",
+  "participants": [
+    "Dana Okafor",
+    "Priya Raman"
+  ],
+  "affected_components": [
+    "Profile"
+  ],
+  "first_occurrence": "2026-09-26T11:14:00Z",
+  "latest_occurrence": "2026-09-26T11:32:00Z",
+  "timestamps": {
+    "impact_started_at": "2026-09-26T11:12:00Z",
+    "declared_at": "2026-09-26T11:16:00Z",
+    "identified_at": "2026-09-26T11:21:00Z",
+    "fixed_at": "2026-09-26T11:32:00Z",
+    "closed_at": null
+  },
+  "probable_cause": "A cache TTL of zero was rolled out, sending every read to the database.",
+  "suggested_next_action": "Add a configuration guardrail rejecting a zero TTL and backfill the change log.",
+  "logs": [
+    {
+      "timestamp": "2026-09-26T11:14:00Z",
+      "level": "ERROR",
+      "message": "profile read returned HTTP 503"
+    },
+    {
+      "timestamp": "2026-09-26T11:18:00Z",
+      "level": "CRITICAL",
+      "message": "profile database connections saturated"
+    },
+    {
+      "timestamp": "2026-09-26T11:32:00Z",
+      "level": "INFO",
+      "message": "cache ttl restored to 300s"
+    }
+  ],
+  "updates": [
+    {
+      "timestamp": "2026-09-26T11:20:00Z",
+      "author": "Dana Okafor",
+      "status": "Fixing",
+      "severity": "ERROR",
+      "message": "Config change identified. Reverting now.",
+      "next_update_in_minutes": 15
+    },
+    {
+      "timestamp": "2026-09-26T11:35:00Z",
+      "author": "Dana Okafor",
+      "status": "Reviewing",
+      "severity": "ERROR",
+      "message": "Error rate is back to zero. Drafting the post-mortem.",
+      "next_update_in_minutes": null
+    }
+  ],
+  "timeline": [
+    {
+      "timestamp": "2026-09-26T11:16:00Z",
+      "kind": "declared",
+      "title": "Incident declared",
+      "detail": "Declared at ERROR by Priya Raman.",
+      "author": "Priya Raman"
+    },
+    {
+      "timestamp": "2026-09-26T11:21:00Z",
+      "kind": "status",
+      "title": "Cause identified",
+      "detail": "Cache TTL set to zero in the 11:10 config push.",
+      "author": "Dana Okafor"
+    },
+    {
+      "timestamp": "2026-09-26T11:32:00Z",
+      "kind": "status",
+      "title": "Fixed",
+      "detail": "TTL restored to 300s.",
+      "author": "Dana Okafor"
+    }
+  ],
+  "follow_ups": [
+    {
+      "id": "FU-6",
+      "title": "Reject zero cache TTL in config validation",
+      "owner": "Dana Okafor",
+      "status": "Open",
+      "priority": "High",
+      "due": "2026-10-05"
+    }
+  ],
+  "post_incident_tasks": [
+    {
+      "id": "PI-8",
+      "title": "Review the incident timeline",
+      "status": "Done",
+      "owner": "Dana Okafor",
+      "due": null
+    },
+    {
+      "id": "PI-9",
+      "title": "Create the post-mortem",
+      "status": "Open",
+      "owner": "Dana Okafor",
+      "due": "2026-09-30"
+    },
+    {
+      "id": "PI-10",
+      "title": "Review follow-ups",
+      "status": "Open",
+      "owner": "Priya Raman",
+      "due": "2026-09-30"
+    }
+  ],
+  "related_incidents": [],
+  "actions": []
+}

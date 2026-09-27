@@ -1,0 +1,61 @@
+[
+  {
+    "id": "wf-announce",
+    "name": "Announce critical incidents",
+    "enabled": true,
+    "trigger": "Incident created or updated",
+    "conditions": [
+      "Severity is one of CRITICAL",
+      "Status is not Closed"
+    ],
+    "steps": [
+      "Post a message to #incidents",
+      "Page the owning team's escalation path"
+    ],
+    "runs_7d": 4
+  },
+  {
+    "id": "wf-status",
+    "name": "Publish a status page update",
+    "enabled": true,
+    "trigger": "Incident status changed",
+    "conditions": [
+      "Severity is one of CRITICAL, ERROR",
+      "Affected components is not empty"
+    ],
+    "steps": [
+      "Draft a customer update from the latest incident update",
+      "Await approval from the incident lead"
+    ],
+    "runs_7d": 6
+  },
+  {
+    "id": "wf-queue",
+    "name": "Auto-declare on queue backlog",
+    "enabled": true,
+    "trigger": "Alert received",
+    "conditions": [
+      "Alert title contains queue depth",
+      "Priority is one of Medium, High, Urgent"
+    ],
+    "steps": [
+      "Declare an incident at WARNING",
+      "Assign the owning team from the catalog"
+    ],
+    "runs_7d": 1
+  },
+  {
+    "id": "wf-followups",
+    "name": "Nudge overdue follow-ups",
+    "enabled": false,
+    "trigger": "Scheduled, weekdays at 09:00",
+    "conditions": [
+      "Follow-up status is Open",
+      "Due date is in the past"
+    ],
+    "steps": [
+      "Send a reminder to the follow-up owner"
+    ],
+    "runs_7d": 0
+  }
+]

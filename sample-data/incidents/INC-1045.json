@@ -1,0 +1,117 @@
+{
+  "id": "INC-1045",
+  "title": "Duplicate order records",
+  "service": "order-ingestion",
+  "severity": "WARNING",
+  "category": "Data",
+  "status": "Documenting",
+  "summary": "Retry processing created duplicate order rows for delayed messages. No customer impact, reconciliation required.",
+  "lead": "Sam Lee",
+  "reporter": "Sam Lee",
+  "participants": [
+    "Sam Lee",
+    "Dana Okafor"
+  ],
+  "affected_components": [
+    "Orders"
+  ],
+  "first_occurrence": "2026-09-26T14:01:00Z",
+  "latest_occurrence": "2026-09-26T14:48:00Z",
+  "timestamps": {
+    "impact_started_at": "2026-09-26T14:00:00Z",
+    "declared_at": "2026-09-26T14:06:00Z",
+    "identified_at": "2026-09-26T14:22:00Z",
+    "fixed_at": "2026-09-26T14:50:00Z",
+    "closed_at": null
+  },
+  "probable_cause": "Retry processing is creating duplicate order rows for delayed messages.",
+  "suggested_next_action": "Add idempotency checks and reconcile duplicate records.",
+  "logs": [
+    {
+      "timestamp": "2026-09-26T14:01:00Z",
+      "level": "WARNING",
+      "message": "duplicate order key detected: ORD-9981"
+    },
+    {
+      "timestamp": "2026-09-26T14:48:00Z",
+      "level": "WARNING",
+      "message": "duplicate order key detected: ORD-9990"
+    }
+  ],
+  "updates": [
+    {
+      "timestamp": "2026-09-26T14:10:00Z",
+      "author": "Sam Lee",
+      "status": "Investigating",
+      "severity": "WARNING",
+      "message": "Two duplicate orders confirmed. No customer-visible impact yet.",
+      "next_update_in_minutes": 60
+    },
+    {
+      "timestamp": "2026-09-26T14:50:00Z",
+      "author": "Sam Lee",
+      "status": "Documenting",
+      "severity": "WARNING",
+      "message": "Consumer patched with an idempotency key. Writing this up.",
+      "next_update_in_minutes": null
+    }
+  ],
+  "timeline": [
+    {
+      "timestamp": "2026-09-26T14:01:00Z",
+      "kind": "alert",
+      "title": "Alert fired: duplicate order keys",
+      "detail": "Low priority, no page.",
+      "author": "AgentOps"
+    },
+    {
+      "timestamp": "2026-09-26T14:06:00Z",
+      "kind": "declared",
+      "title": "Incident declared",
+      "detail": "Declared at WARNING by Sam Lee.",
+      "author": "Sam Lee"
+    },
+    {
+      "timestamp": "2026-09-26T14:50:00Z",
+      "kind": "status",
+      "title": "Status changed from Fixing to Documenting",
+      "detail": "Idempotency key deployed.",
+      "author": "Sam Lee"
+    }
+  ],
+  "follow_ups": [
+    {
+      "id": "FU-5",
+      "title": "Reconcile duplicate order rows for 26 Sep",
+      "owner": "Dana Okafor",
+      "status": "Open",
+      "priority": "Medium",
+      "due": "2026-10-01"
+    }
+  ],
+  "post_incident_tasks": [
+    {
+      "id": "PI-5",
+      "title": "Review the incident timeline",
+      "status": "Done",
+      "owner": "Sam Lee",
+      "due": null
+    },
+    {
+      "id": "PI-6",
+      "title": "Create the post-mortem",
+      "status": "Open",
+      "owner": "Sam Lee",
+      "due": "2026-10-02"
+    },
+    {
+      "id": "PI-7",
+      "title": "Schedule the debrief",
+      "status": "Open",
+      "owner": "Dana Okafor",
+      "due": "2026-10-02"
+    }
+  ],
+  "related_incidents": [],
+  "actions": []
+}

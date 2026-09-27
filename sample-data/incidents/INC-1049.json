@@ -1,0 +1,105 @@
+{
+  "id": "INC-1049",
+  "title": "Report exports timing out",
+  "service": "reporting",
+  "severity": "WARNING",
+  "category": "Performance",
+  "status": "Closed",
+  "summary": "Large CSV exports timed out for enterprise accounts during the nightly reporting window.",
+  "lead": "Sam Lee",
+  "reporter": "Alex Moreau",
+  "participants": [
+    "Sam Lee"
+  ],
+  "affected_components": [
+    "Reporting"
+  ],
+  "first_occurrence": "2026-09-26T02:40:00Z",
+  "latest_occurrence": "2026-09-26T03:05:00Z",
+  "timestamps": {
+    "impact_started_at": "2026-09-26T02:38:00Z",
+    "declared_at": "2026-09-26T02:45:00Z",
+    "identified_at": "2026-09-26T02:52:00Z",
+    "fixed_at": "2026-09-26T03:05:00Z",
+    "closed_at": "2026-09-26T09:00:00Z"
+  },
+  "probable_cause": "Export queries were not using the account index after a schema migration.",
+  "suggested_next_action": "Rebuild the account index and add an export duration budget to CI.",
+  "logs": [
+    {
+      "timestamp": "2026-09-26T02:40:00Z",
+      "level": "WARNING",
+      "message": "export job exceeded 120s soft limit"
+    },
+    {
+      "timestamp": "2026-09-26T02:51:00Z",
+      "level": "ERROR",
+      "message": "export job cancelled after 300s"
+    },
+    {
+      "timestamp": "2026-09-26T03:05:00Z",
+      "level": "INFO",
+      "message": "account index rebuilt"
+    }
+  ],
+  "updates": [
+    {
+      "timestamp": "2026-09-26T03:05:00Z",
+      "author": "Sam Lee",
+      "status": "Monitoring",
+      "severity": "WARNING",
+      "message": "Index rebuilt, exports completing in under 20s.",
+      "next_update_in_minutes": null
+    },
+    {
+      "timestamp": "2026-09-26T09:00:00Z",
+      "author": "Sam Lee",
+      "status": "Closed",
+      "severity": "WARNING",
+      "message": "Closed after a clean nightly run.",
+      "next_update_in_minutes": null
+    }
+  ],
+  "timeline": [
+    {
+      "timestamp": "2026-09-26T02:45:00Z",
+      "kind": "declared",
+      "title": "Incident declared",
+      "detail": "Declared at WARNING by Alex Moreau.",
+      "author": "Alex Moreau"
+    },
+    {
+      "timestamp": "2026-09-26T02:52:00Z",
+      "kind": "status",
+      "title": "Cause identified",
+      "detail": "Missing account index after migration 0142.",
+      "author": "Sam Lee"
+    },
+    {
+      "timestamp": "2026-09-26T09:00:00Z",
+      "kind": "closed",
+      "title": "Incident closed",
+      "detail": "Clean nightly run confirmed.",
+      "author": "Sam Lee"
+    }
+  ],
+  "post_incident_tasks": [
+    {
+      "id": "PI-11",
+      "title": "Review the incident timeline",
+      "status": "Done",
+      "owner": "Sam Lee",
+      "due": null
+    },
+    {
+      "id": "PI-12",
+      "title": "Create the post-mortem",
+      "status": "Done",
+      "owner": "Sam Lee",
+      "due": null
+    }
+  ],
+  "related_incidents": [],
+  "actions": [],
+  "follow_ups": []
+}

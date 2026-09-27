@@ -1,0 +1,61 @@
+{
+  "id": "INC-1047",
+  "title": "Inventory sync backlog growing",
+  "service": "inventory-sync",
+  "severity": "WARNING",
+  "category": "Integration",
+  "status": "Triage",
+  "summary": "The warehouse sync queue is growing faster than it drains. Stock levels may lag by up to an hour.",
+  "lead": "Unassigned",
+  "reporter": "AgentOps",
+  "participants": [
+    "Dana Okafor"
+  ],
+  "affected_components": [
+    "Inventory"
+  ],
+  "first_occurrence": "2026-09-26T19:02:00Z",
+  "latest_occurrence": "2026-09-26T19:21:00Z",
+  "timestamps": {
+    "impact_started_at": "2026-09-26T19:00:00Z",
+    "declared_at": "2026-09-26T19:05:00Z",
+    "identified_at": null,
+    "fixed_at": null,
+    "closed_at": null
+  },
+  "probable_cause": "Queue consumers are not keeping up with the warehouse feed.",
+  "suggested_next_action": "Scale the sync consumers and confirm whether the warehouse feed volume changed.",
+  "logs": [
+    {
+      "timestamp": "2026-09-26T19:02:00Z",
+      "level": "WARNING",
+      "message": "inventory sync queue depth 12000 and rising"
+    },
+    {
+      "timestamp": "2026-09-26T19:21:00Z",
+      "level": "ERROR",
+      "message": "inventory sync consumer lag exceeded 45 minutes"
+    }
+  ],
+  "updates": [],
+  "timeline": [
+    {
+      "timestamp": "2026-09-26T19:02:00Z",
+      "kind": "alert",
+      "title": "Alert fired: queue depth above threshold",
+      "detail": "Awaiting triage.",
+      "author": "AgentOps"
+    },
+    {
+      "timestamp": "2026-09-26T19:05:00Z",
+      "kind": "declared",
+      "title": "Incident declared",
+      "detail": "Auto-declared by the queue-depth workflow.",
+      "author": "AgentOps"
+    }
+  ],
+  "related_incidents": [],
+  "actions": [],
+  "follow_ups": [],
+  "post_incident_tasks": []
+}

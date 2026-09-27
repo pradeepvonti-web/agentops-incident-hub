@@ -1,0 +1,57 @@
+{
+  "name": "Restora Status",
+  "url": "status.restora.io",
+  "overall": "Degraded performance",
+  "components": [
+    {
+      "name": "Checkout",
+      "status": "Partial outage",
+      "uptime_90d": 99.82
+    },
+    {
+      "name": "Search",
+      "status": "Degraded performance",
+      "uptime_90d": 99.94
+    },
+    {
+      "name": "Identity",
+      "status": "Operational",
+      "uptime_90d": 99.99
+    },
+    {
+      "name": "Orders",
+      "status": "Operational",
+      "uptime_90d": 99.97
+    },
+    {
+      "name": "Partner Gateway",
+      "status": "Degraded performance",
+      "uptime_90d": 99.88
+    },
+    {
+      "name": "Reporting",
+      "status": "Operational",
+      "uptime_90d": 99.95
+    }
+  ],
+  "updates": [
+    {
+      "timestamp": "2026-09-26T18:20:00Z",
+      "incident_id": "INC-1042",
+      "status": "Investigating",
+      "message": "Customers may be unable to complete checkout. We have identified the cause and are rolling back a recent change."
+    },
+    {
+      "timestamp": "2026-09-26T18:10:00Z",
+      "incident_id": "INC-1043",
+      "status": "Monitoring",
+      "message": "Search results are returning normally. We are monitoring performance for the next 30 minutes."
+    },
+    {
+      "timestamp": "2026-09-26T16:25:00Z",
+      "incident_id": "INC-1046",
+      "status": "Investigating",
+      "message": "Some partner integrations are delayed while an upstream provider recovers."
+    }
+  ]
+}

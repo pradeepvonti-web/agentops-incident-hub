@@ -1,0 +1,85 @@
+{
+  "id": "INC-1046",
+  "title": "Partner webhook failures",
+  "service": "partner-gateway",
+  "severity": "ERROR",
+  "category": "Integration",
+  "status": "Investigating",
+  "summary": "A partner endpoint is intermittently returning 502s, so outbound webhooks are failing and retrying.",
+  "lead": "Alex Moreau",
+  "reporter": "Alex Moreau",
+  "participants": [
+    "Alex Moreau",
+    "Sam Lee"
+  ],
+  "affected_components": [
+    "Partner Gateway"
+  ],
+  "first_occurrence": "2026-09-26T16:05:00Z",
+  "latest_occurrence": "2026-09-26T18:01:00Z",
+  "timestamps": {
+    "impact_started_at": "2026-09-26T16:03:00Z",
+    "declared_at": "2026-09-26T16:10:00Z",
+    "identified_at": null,
+    "fixed_at": null,
+    "closed_at": null
+  },
+  "probable_cause": "The external partner endpoint is intermittently returning 502 responses.",
+  "suggested_next_action": "Confirm partner status, enable bounded retries, and inspect failures by endpoint.",
+  "related_incidents": [
+    "INC-1042"
+  ],
+  "logs": [
+    {
+      "timestamp": "2026-09-26T16:05:00Z",
+      "level": "ERROR",
+      "message": "third-party webhook returned HTTP 502"
+    },
+    {
+      "timestamp": "2026-09-26T16:35:00Z",
+      "level": "WARNING",
+      "message": "webhook retry scheduled"
+    },
+    {
+      "timestamp": "2026-09-26T18:01:00Z",
+      "level": "ERROR",
+      "message": "upstream external API returned HTTP 502"
+    }
+  ],
+  "updates": [
+    {
+      "timestamp": "2026-09-26T16:20:00Z",
+      "author": "Alex Moreau",
+      "status": "Investigating",
+      "severity": "ERROR",
+      "message": "Partner has acknowledged degraded service on their side. Retries are bounded.",
+      "next_update_in_minutes": 60
+    }
+  ],
+  "timeline": [
+    {
+      "timestamp": "2026-09-26T16:05:00Z",
+      "kind": "alert",
+      "title": "Alert fired: webhook delivery failures",
+      "detail": "Routed to Integrations on-call.",
+      "author": "AgentOps"
+    },
+    {
+      "timestamp": "2026-09-26T16:10:00Z",
+      "kind": "declared",
+      "title": "Incident declared",
+      "detail": "Declared at ERROR by Alex Moreau.",
+      "author": "Alex Moreau"
+    }
+  ],
+  "actions": [
+    {
+      "id": "ACT-6",
+      "description": "Open a ticket with the partner",
+      "owner": "Alex Moreau",
+      "status": "Open"
+    }
+  ],
+  "follow_ups": [],
+  "post_incident_tasks": []
+}

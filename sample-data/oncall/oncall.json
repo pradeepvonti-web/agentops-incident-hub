@@ -1,0 +1,149 @@
+{
+  "schedules": [
+    {
+      "id": "payments",
+      "name": "Payments primary",
+      "timezone": "Europe/London",
+      "current": {
+        "person": "Priya Raman",
+        "until": "2026-09-26T20:00:00Z"
+      },
+      "next": {
+        "person": "Sam Lee",
+        "until": "2026-09-27T20:00:00Z"
+      },
+      "rotation": "Weekly handover, Thursday 09:00",
+      "shifts": [
+        {
+          "person": "Priya Raman",
+          "start": "2026-09-26T08:00:00Z",
+          "end": "2026-09-26T20:00:00Z"
+        },
+        {
+          "person": "Sam Lee",
+          "start": "2026-09-26T20:00:00Z",
+          "end": "2026-09-27T08:00:00Z"
+        },
+        {
+          "person": "Priya Raman",
+          "start": "2026-09-27T08:00:00Z",
+          "end": "2026-09-27T20:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "discovery",
+      "name": "Discovery primary",
+      "timezone": "Europe/Berlin",
+      "current": {
+        "person": "Dana Okafor",
+        "until": "2026-09-26T18:00:00Z"
+      },
+      "next": {
+        "person": "Dana Okafor",
+        "until": "2026-09-27T18:00:00Z"
+      },
+      "rotation": "Daily handover, 18:00",
+      "shifts": [
+        {
+          "person": "Dana Okafor",
+          "start": "2026-09-26T06:00:00Z",
+          "end": "2026-09-26T18:00:00Z"
+        },
+        {
+          "person": "Alex Moreau",
+          "start": "2026-09-26T18:00:00Z",
+          "end": "2026-09-27T06:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "integrations",
+      "name": "Integrations primary",
+      "timezone": "America/New_York",
+      "current": {
+        "person": "Alex Moreau",
+        "until": "2026-09-27T13:00:00Z"
+      },
+      "next": {
+        "person": "Sam Lee",
+        "until": "2026-09-28T13:00:00Z"
+      },
+      "rotation": "Weekly handover, Monday 09:00",
+      "shifts": [
+        {
+          "person": "Alex Moreau",
+          "start": "2026-09-26T13:00:00Z",
+          "end": "2026-09-27T13:00:00Z"
+        },
+        {
+          "person": "Sam Lee",
+          "start": "2026-09-27T13:00:00Z",
+          "end": "2026-09-28T13:00:00Z"
+        }
+      ]
+    }
+  ],
+  "escalation_paths": [
+    {
+      "id": "payments",
+      "name": "Payments primary",
+      "levels": [
+        {
+          "level": 1,
+          "notify": "Payments primary schedule",
+          "after_minutes": 0,
+          "method": "Push and SMS"
+        },
+        {
+          "level": 2,
+          "notify": "Priya Raman",
+          "after_minutes": 10,
+          "method": "Phone call"
+        },
+        {
+          "level": 3,
+          "notify": "Engineering manager",
+          "after_minutes": 20,
+          "method": "Phone call"
+        }
+      ]
+    },
+    {
+      "id": "discovery",
+      "name": "Discovery primary",
+      "levels": [
+        {
+          "level": 1,
+          "notify": "Discovery primary schedule",
+          "after_minutes": 0,
+          "method": "Push"
+        },
+        {
+          "level": 2,
+          "notify": "Platform primary schedule",
+          "after_minutes": 15,
+          "method": "Push and SMS"
+        }
+      ]
+    },
+    {
+      "id": "integrations",
+      "name": "Integrations primary",
+      "levels": [
+        {
+          "level": 1,
+          "notify": "Integrations primary schedule",
+          "after_minutes": 0,
+          "method": "Push"
+        },
+        {
+          "level": 2,
+          "notify": "Alex Moreau",
+          "after_minutes": 15,
+          "method": "SMS"
+        }
+      ]
+    }
+  ]
+}
