@@ -103,6 +103,7 @@ The report is written under `artifacts/`.
 
 - `docs/ARTICLE.md` — why: the agentic-engineering write-up this repository accompanies.
 - `docs/BUILDING_RESTORA.md` — how: a walk through the codebase, the database rules, and the decisions.
+- `docs/BUILD_WITH_CLAUDE_CODE.md` — step by step: the twelve stages, the prompts used, and what to check at each.
 
 ## Learning path
 
