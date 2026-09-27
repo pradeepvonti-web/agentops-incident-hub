@@ -1,5 +1,7 @@
 # Restora
 
+https://github.com/pradeepvonti-web/agentops-incident-hub · [CI](https://github.com/pradeepvonti-web/agentops-incident-hub/actions)
+
 A small but complete reference project for learning **agentic engineering**:
 context engineering, deterministic tooling, reusable skills, validation,
 and parallel-agent-friendly development.

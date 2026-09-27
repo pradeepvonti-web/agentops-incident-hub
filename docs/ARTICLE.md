@@ -235,8 +235,8 @@ My repository failed that standard on the first day, in two places, while I was
 writing about it. That is where the technology is: the ideas are right, and the
 work is still work.
 
-The repository is public as `agentops-incident-hub`. The companion piece,
-`docs/BUILDING_RESTORA.md`, walks the codebase file by file.
+The repository is public at https://github.com/pradeepvonti-web/agentops-incident-hub. The companion
+piece, `docs/BUILDING_RESTORA.md`, walks the codebase file by file.
 
 ---
 
