@@ -1,0 +1,27 @@
+[project]
+name = "mcp-gateway"
+version = "0.1.0"
+description = "MCP Gateway - the single mediated path from agents to enterprise systems"
+requires-python = ">=3.11"
+dependencies = [
+    "adp-contracts",
+    "mcp>=1.2",
+    "pydantic>=2.9",
+    "pyyaml>=6.0",
+    "httpx>=0.27",
+    "azure-identity>=1.19",
+    "structlog>=24.4",
+]
+
+[project.scripts]
+mcp-gateway = "mcp_gateway.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mcp_gateway"]
+
+[tool.uv.sources]
+adp-contracts = { workspace = true }

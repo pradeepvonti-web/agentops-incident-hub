@@ -1,0 +1,140 @@
+# Azure Pipelines -- CI/CD for the Databricks Asset Bundle.
+#
+# This is the pipeline an agent-authored pull request flows into. It is
+# deliberately identical to the one a human-authored pull request flows into:
+# the agent gets no fast path, no separate gate, and no exemption. That is what
+# makes "an agent opened this PR" an uninteresting fact rather than a security
+# conversation.
+#
+# Flow:
+#   pull request  ->  Validate      (bundle validate + unit tests, no deploy)
+#   merge to main ->  Deploy dev    (automatic)
+#                 ->  Deploy test   (Azure DevOps environment approval)
+#                 ->  Deploy prod   (Azure DevOps environment approval)
+#
+# The approval gates are Azure DevOps *Environments*, not pipeline variables.
+# That matters: environment approvals are recorded against a named reviewer and
+# survive in the audit log, which a variable check does not.
+
+trigger:
+  branches:
+    include: [main]
+  paths:
+    include: [resources/*, source/*, databricks.yml]
+
+pr:
+  branches:
+    include: [main]
+
+variables:
+  # Workload identity federation -- no secret in a variable group, nothing to
+  # rotate, nothing to leak. Matches ADR-0002: federation only, never a stored
+  # credential. Create this as an Azure Resource Manager service connection with
+  # "Workload identity federation" as the authentication method.
+  - name: azureServiceConnection
+    value: databricks-deploy
+
+  - name: pythonVersion
+    value: "3.11"
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  # ------------------------------------------------------------------ validate
+  # Runs on every pull request and again on main. Deploys nothing.
+  - stage: Validate
+    displayName: Validate bundle
+    jobs:
+      - job: validate
+        displayName: bundle validate + tests
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: $(pythonVersion)
+
+          - script: |
+              set -euo pipefail
+              curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+              databricks --version
+            displayName: Install Databricks CLI
+
+          - script: |
+              set -euo pipefail
+              python -m pip install --upgrade pip
+              pip install -r requirements-dev.txt
+              pytest tests/ -q
+            displayName: Unit tests
+
+          # Validate against every target, not just dev. A bundle that resolves
+          # in dev and fails in prod is exactly the class of surprise that
+          # environment parity exists to prevent, and finding it at the prod
+          # approval gate is finding it too late.
+          - task: AzureCLI@2
+            displayName: bundle validate (all targets)
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+                for target in dev test prod; do
+                  echo "--- validating $target ---"
+                  databricks bundle validate -t "$target"
+                done
+
+  # --------------------------------------------------------------- deploy dev
+  - stage: DeployDev
+    displayName: Deploy to dev
+    dependsOn: Validate
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: dev
+        environment: databricks-dev
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - template: .azure/steps-deploy.yml
+                  parameters:
+                    target: dev
+                    serviceConnection: $(azureServiceConnection)
+
+  # -------------------------------------------------------------- deploy test
+  - stage: DeployTest
+    displayName: Deploy to test
+    dependsOn: DeployDev
+    condition: succeeded()
+    jobs:
+      - deployment: test
+        # Approval is configured on the environment in Azure DevOps, not here.
+        # Keeping it out of YAML means a pull request cannot edit its own gate.
+        environment: databricks-test
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - template: .azure/steps-deploy.yml
+                  parameters:
+                    target: test
+                    serviceConnection: $(azureServiceConnection)
+
+  # -------------------------------------------------------------- deploy prod
+  - stage: DeployProd
+    displayName: Deploy to prod
+    dependsOn: DeployTest
+    condition: succeeded()
+    jobs:
+      - deployment: prod
+        environment: databricks-prod
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - template: .azure/steps-deploy.yml
+                  parameters:
+                    target: prod
+                    serviceConnection: $(azureServiceConnection)

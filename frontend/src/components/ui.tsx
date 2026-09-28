@@ -45,7 +45,7 @@ export function PageHeader({
   actions
 }: {
   icon: string;
-  eyebrow?: string;
+  eyebrow?: ReactNode;
   title: string;
   actions?: ReactNode;
 }) {

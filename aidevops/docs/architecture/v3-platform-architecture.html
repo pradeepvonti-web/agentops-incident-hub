@@ -1,0 +1,806 @@
+<title>AI DevOps Platform Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground: #f7f8fa;
+    --surface: #ffffff;
+    --surface-2: #f0f2f6;
+    --ink: #15171c;
+    --ink-2: #5a6172;
+    --line: #dfe3ea;
+    --line-strong: #c3c9d6;
+    --control: #4c5bd4;
+    --control-soft: #eceefb;
+    --execution: #0f766e;
+    --execution-soft: #e5f2f0;
+    --flag: #b45309;
+    --flag-soft: #fdf2e3;
+
+    --sans: "IBM Plex Sans", ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0e1014;
+      --surface: #16191f;
+      --surface-2: #1c2029;
+      --ink: #edeff3;
+      --ink-2: #99a1b3;
+      --line: #262b35;
+      --line-strong: #39404e;
+      --control: #8590f0;
+      --control-soft: #1d2140;
+      --execution: #3fb9ae;
+      --execution-soft: #10302e;
+      --flag: #e0a159;
+      --flag-soft: #33260f;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #0e1014;
+    --surface: #16191f;
+    --surface-2: #1c2029;
+    --ink: #edeff3;
+    --ink-2: #99a1b3;
+    --line: #262b35;
+    --line-strong: #39404e;
+    --control: #8590f0;
+    --control-soft: #1d2140;
+    --execution: #3fb9ae;
+    --execution-soft: #10302e;
+    --flag: #e0a159;
+    --flag-soft: #33260f;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 1060px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 48px 72px;
+  }
+
+  /* ---------------------------------------------------------- masthead */
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin: 0 0 12px;
+  }
+
+  h1 {
+    font-size: clamp(30px, 5vw, 44px);
+    font-weight: 600;
+    letter-spacing: -0.022em;
+    line-height: 1.1;
+    text-wrap: balance;
+    margin: 0 0 14px;
+  }
+
+  .standfirst {
+    font-size: 18px;
+    color: var(--ink-2);
+    max-width: 60ch;
+    margin: 0 0 28px;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+  }
+
+  .tag {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    padding: 3px 9px;
+    border: 1px solid var(--line-strong);
+    border-radius: 3px;
+    color: var(--ink-2);
+  }
+
+  .tag-control { border-color: var(--control); color: var(--control); }
+  .tag-execution { border-color: var(--execution); color: var(--execution); }
+
+  /* ---------------------------------------------------------- sections */
+
+  section { margin-top: 56px; }
+
+  h2 {
+    font-size: 13px;
+    font-family: var(--mono);
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin: 0 0 8px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  h3 {
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: -0.012em;
+    text-wrap: balance;
+    margin: 24px 0 10px;
+  }
+
+  p { max-width: 68ch; margin: 0 0 14px; }
+
+  a { color: var(--control); text-underline-offset: 2px; }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--surface-2);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  strong { font-weight: 600; }
+
+  /* ---------------------------------------------------------- figures */
+
+  figure {
+    margin: 28px 0;
+    padding: 24px 20px 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow-x: auto;
+  }
+
+  figure svg {
+    display: block;
+    width: 100%;
+    min-width: 640px;
+    max-width: 100%;
+    height: auto;
+    color: var(--ink-2);
+  }
+
+  figcaption {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    font-size: 13.5px;
+    color: var(--ink-2);
+    max-width: 78ch;
+  }
+
+  .svg-box { fill: var(--surface); }
+  .svg-panel { fill: none; }
+  .svg-label { font-family: var(--mono); font-size: 11px; fill: var(--ink-2); }
+  .svg-title { font-family: var(--sans); font-size: 12.5px; font-weight: 500; fill: var(--ink); }
+  .svg-head {
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+
+  /* ---------------------------------------------------------- callout */
+
+  .callout {
+    margin: 24px 0;
+    padding: 18px 20px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--control);
+    border-radius: 0 6px 6px 0;
+  }
+
+  .callout-flag { border-left-color: var(--flag); }
+
+  .callout h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+
+  .callout p:last-child { margin-bottom: 0; }
+
+  .never-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 6px 20px;
+  }
+
+  .never-list li {
+    font-size: 13.5px;
+    color: var(--ink-2);
+    padding-left: 18px;
+    position: relative;
+  }
+
+  .never-list li::before {
+    content: "×";
+    position: absolute;
+    left: 2px;
+    color: var(--flag);
+    font-weight: 600;
+  }
+
+  /* ---------------------------------------------------------- table */
+
+  .table-wrap { overflow-x: auto; margin: 20px 0; }
+
+  table {
+    width: 100%;
+    min-width: 620px;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    padding: 0 14px 10px 0;
+    border-bottom: 1px solid var(--line-strong);
+    vertical-align: bottom;
+  }
+
+  td {
+    padding: 12px 14px 12px 0;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+
+  td:first-child { font-weight: 500; }
+
+  .verdict {
+    font-family: var(--mono);
+    font-size: 11px;
+    white-space: nowrap;
+    padding: 2px 7px;
+    border-radius: 3px;
+  }
+
+  .verdict-fixed { background: var(--execution-soft); color: var(--execution); }
+  .verdict-restored { background: var(--control-soft); color: var(--control); }
+  .verdict-new { background: var(--flag-soft); color: var(--flag); }
+
+  /* ---------------------------------------------------------- footer */
+
+  footer {
+    margin-top: 64px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+
+  @media (max-width: 620px) {
+    .page { padding-block: 32px 48px; }
+    body { font-size: 14.5px; }
+  }
+</style>
+
+<div class="page">
+
+  <p class="eyebrow">Architecture · v3 · September 2026</p>
+  <h1>Data &amp; Analytics AI DevOps Platform</h1>
+  <p class="standfirst">
+    An agentic control plane for data engineering on Azure&nbsp;+&nbsp;Databricks.
+    This revision corrects two structural problems in v2 and makes explicit the
+    decision the earlier diagrams left unsaid: which half of this system runs in
+    whose cloud.
+  </p>
+  <div class="meta">
+    <span class="tag tag-control">Control plane · our subscription</span>
+    <span class="tag tag-execution">Execution plane · customer subscription</span>
+    <span class="tag">ADR-0001 · 0002 · 0003</span>
+  </div>
+
+  <!-- ============================================ THE SPLIT -->
+  <section>
+    <h2>The decision everything follows from</h2>
+    <h3>Two planes, and an outbound-only boundary between them</h3>
+
+    <p>
+      v1 and v2 both drew this platform as a single stack. That is the omission
+      that matters, because a buyer's first question is not what the agents do —
+      it is <em>where our credentials live and what leaves our subscription</em>.
+      The answer is the architecture.
+    </p>
+
+    <figure>
+      <svg viewBox="0 0 900 432" role="img"
+           aria-label="The control plane runs in our Azure subscription and holds only metadata. The execution plane runs in the customer's Azure subscription and holds all credentials, data access and full traces. The execution plane polls outbound for work and posts span metadata; there is no inbound path from us into the customer network.">
+        <defs>
+          <marker id="ar-out" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+          <marker id="ar-sys" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--execution)"/>
+          </marker>
+        </defs>
+
+        <!-- panels -->
+        <rect x="16" y="44" width="292" height="332" rx="5"
+              class="svg-panel" stroke="var(--control)" stroke-width="1.5"/>
+        <rect x="592" y="44" width="292" height="332" rx="5"
+              class="svg-panel" stroke="var(--execution)" stroke-width="1.5"/>
+
+        <text x="16" y="26" class="svg-head" fill="var(--control)">Our Azure subscription</text>
+        <text x="16" y="38" class="svg-label">Control plane · multi-tenant · metadata only</text>
+
+        <text x="884" y="26" class="svg-head" fill="var(--execution)" text-anchor="end">Customer Azure subscription</text>
+        <text x="884" y="38" class="svg-label" text-anchor="end">Execution plane · isolated per tenant</text>
+
+        <!-- control plane boxes -->
+        <g>
+          <rect x="34" y="66" width="256" height="36" rx="4" class="svg-box" stroke="var(--line-strong)"/>
+          <text x="48" y="89" class="svg-title">Portal &amp; API</text>
+
+          <rect x="34" y="112" width="256" height="36" rx="4" class="svg-box" stroke="var(--line-strong)"/>
+          <text x="48" y="135" class="svg-title">Orchestrator · work queue</text>
+
+          <rect x="34" y="158" width="256" height="36" rx="4" class="svg-box"
+                stroke="var(--control)" stroke-width="1.5"/>
+          <text x="48" y="181" class="svg-title">Reusable Asset Registry</text>
+
+          <rect x="34" y="204" width="256" height="36" rx="4" class="svg-box" stroke="var(--line-strong)"/>
+          <text x="48" y="227" class="svg-title">Evaluation · acceptance rate</text>
+
+          <rect x="34" y="250" width="256" height="36" rx="4" class="svg-box" stroke="var(--line-strong)"/>
+          <text x="48" y="273" class="svg-title">Tenant config · billing</text>
+        </g>
+
+        <text x="34" y="320" class="svg-label" fill="var(--control)">Holds no customer data.</text>
+        <text x="34" y="336" class="svg-label" fill="var(--control)">Holds no customer credentials.</text>
+
+        <!-- execution plane boxes -->
+        <g>
+          <rect x="610" y="66" width="256" height="36" rx="4" class="svg-box" stroke="var(--line-strong)"/>
+          <text x="624" y="89" class="svg-title">Agent runtime</text>
+
+          <rect x="610" y="112" width="256" height="36" rx="4" class="svg-box"
+                stroke="var(--execution)" stroke-width="1.5"/>
+          <text x="624" y="135" class="svg-title">MCP Gateway</text>
+
+          <rect x="610" y="158" width="256" height="36" rx="4" class="svg-box" stroke="var(--line-strong)"/>
+          <text x="624" y="181" class="svg-title">Key Vault · all credentials</text>
+
+          <rect x="610" y="204" width="256" height="36" rx="4" class="svg-box" stroke="var(--line-strong)"/>
+          <text x="624" y="227" class="svg-title">Full traces · with payloads</text>
+        </g>
+
+        <line x1="738" y1="240" x2="738" y2="280" stroke="var(--execution)"
+              stroke-width="1.5" marker-end="url(#ar-sys)"/>
+
+        <rect x="610" y="284" width="256" height="38" rx="4"
+              fill="var(--execution-soft)" stroke="var(--execution)" stroke-dasharray="3 3"/>
+        <text x="738" y="307" class="svg-title" text-anchor="middle">Databricks · SAP · ADLS · Purview</text>
+
+        <text x="866" y="344" class="svg-label" text-anchor="end" fill="var(--execution)">Private endpoints. Never leaves this subscription.</text>
+
+        <!-- boundary -->
+        <line x1="450" y1="14" x2="450" y2="396" stroke="var(--flag)"
+              stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="450" y="408" class="svg-head" fill="var(--flag)" text-anchor="middle">tenant boundary</text>
+
+        <!-- crossings -->
+        <!-- Halo: the boundary line runs behind these labels, so knock it out
+             with a stroke in the surface colour rather than breaking the line. -->
+        <text x="450" y="94" class="svg-label" text-anchor="middle" fill="var(--ink-2)"
+              stroke="var(--surface)" stroke-width="5" paint-order="stroke">poll for work</text>
+        <line x1="600" y1="104" x2="308" y2="104" stroke="currentColor"
+              stroke-width="1.5" marker-end="url(#ar-out)"/>
+
+        <text x="450" y="160" class="svg-label" text-anchor="middle"
+              stroke="var(--surface)" stroke-width="5" paint-order="stroke">span metadata · digests · cost</text>
+        <line x1="600" y1="170" x2="308" y2="170" stroke="currentColor"
+              stroke-width="1.5" marker-end="url(#ar-out)"/>
+
+        <text x="450" y="228" class="svg-label" text-anchor="middle" fill="var(--flag)"
+              stroke="var(--surface)" stroke-width="5" paint-order="stroke">no inbound path</text>
+        <line x1="316" y1="238" x2="584" y2="238" stroke="var(--flag)"
+              stroke-width="1.5" stroke-dasharray="4 4" opacity="0.6"/>
+        <line x1="440" y1="228" x2="460" y2="248" stroke="var(--flag)" stroke-width="2"/>
+        <line x1="460" y1="228" x2="440" y2="248" stroke="var(--flag)" stroke-width="2"/>
+
+        <text x="450" y="290" class="svg-label" text-anchor="middle">no VPN · no ingress</text>
+        <text x="450" y="306" class="svg-label" text-anchor="middle">no firewall exception</text>
+      </svg>
+      <figcaption>
+        Both arrows that cross the boundary originate inside the customer's
+        subscription. The execution plane polls us for queued runs and posts span
+        metadata back; we never initiate a connection inward. For the customer's
+        network team that means no inbound rule, no site-to-site VPN and no IP
+        allowlist — which is why this review is short.
+      </figcaption>
+    </figure>
+
+    <div class="callout callout-flag">
+      <h4>What never crosses the boundary</h4>
+      <ul class="never-list">
+        <li>Prompts and completions</li>
+        <li>Generated code and diffs</li>
+        <li>Tool arguments and results</li>
+        <li>Table, column and schema names</li>
+        <li>Any credential or secret</li>
+        <li>Any row of customer data</li>
+      </ul>
+      <p style="margin-top:14px">
+        Tool arguments travel as SHA-256 digests, so we can see that two runs called
+        the same tool the same way without seeing what they asked for. Payload export
+        is opt-in per tenant, default off, and visible in the portal while it is on.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================================ CORRECTIONS -->
+  <section>
+    <h2>What changed from v2</h2>
+    <h3>Two structural fixes and one restoration</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:22%">Change</th>
+            <th style="width:46%">Why</th>
+            <th style="width:32%">v3</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Two-plane split made explicit</td>
+            <td>
+              v1 and v2 drew one stack, which reads as "the vendor's SaaS touches our
+              production data". That is the version of the architecture that fails a
+              security review, and it is not the one we are building.
+            </td>
+            <td><span class="verdict verdict-new">New in v3</span></td>
+          </tr>
+          <tr>
+            <td>Build &amp; Reuse restored</td>
+            <td>
+              v2 dropped the layer but kept an arrow labelled "feedback to build &amp;
+              reuse" pointing at nothing. The Reusable Asset Registry is the part that
+              compounds — agents commoditise, an accumulated library of a customer's own
+              templates, DQ rules and patterns does not.
+            </td>
+            <td><span class="verdict verdict-restored">Restored</span></td>
+          </tr>
+          <tr>
+            <td>Duplicate Security agent removed</td>
+            <td>
+              v1 shipped a "Securité Agent" carrying the Release agent's caption — a
+              rendering artefact, but one that appeared on a diagram shown to customers.
+            </td>
+            <td><span class="verdict verdict-fixed">Fixed in v2</span></td>
+          </tr>
+          <tr>
+            <td>Nine agents cut to three</td>
+            <td>
+              Analytics, BI and Genie all overlapped on semantic modelling; Data Quality
+              and Testing overlapped on validation. At a team of five, nine agents means
+              nine mediocre agents. Three with clear boundaries is a product.
+            </td>
+            <td><span class="verdict verdict-new">New in v3</span></td>
+          </tr>
+          <tr>
+            <td>Security split: enforcement vs policy</td>
+            <td>
+              Security appeared in three places at once with no stated relationship.
+              Now the Security agent enforces, Govern &amp; Operate sets policy, and the
+              MCP Gateway is where enforcement actually happens on every call.
+            </td>
+            <td><span class="verdict verdict-new">New in v3</span></td>
+          </tr>
+          <tr>
+            <td>Genie's three altitudes labelled</td>
+            <td>
+              Genie legitimately appears as an agent, a platform capability and a
+              consumption surface. Correct, but unlabelled it reads as duplication.
+            </td>
+            <td><span class="verdict verdict-fixed">Clarified</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================ LAYER STACK -->
+  <section>
+    <h2>The corrected stack</h2>
+    <h3>Every layer, and which plane it runs in</h3>
+
+    <p>
+      Same layers as v2, with Build &amp; Reuse back and a column neither earlier
+      version had: where each layer actually executes. Read the right-hand column
+      first — it is the part that determines what a customer has to approve.
+    </p>
+
+    <figure>
+      <svg viewBox="0 0 900 502" role="img"
+           aria-label="Eight platform layers from entry points down to govern and operate, each annotated with whether it runs in our control plane, the customer's execution plane, or both.">
+        <defs>
+          <marker id="ar-down" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <text x="16" y="16" class="svg-head" fill="var(--ink-2)">Layer</text>
+        <text x="700" y="16" class="svg-head" fill="var(--ink-2)">Runs in</text>
+
+        <!-- 1 Entry points -->
+        <rect x="16" y="28" width="664" height="44" rx="4" class="svg-box" stroke="var(--line-strong)"/>
+        <text x="32" y="48" class="svg-title">Entry Points</text>
+        <text x="32" y="64" class="svg-label">Portal · Databricks · VS Code · Power BI · Teams · API</text>
+        <rect x="700" y="36" width="184" height="28" rx="3"
+              fill="var(--control-soft)" stroke="var(--control)"/>
+        <text x="792" y="55" class="svg-label" fill="var(--control)" text-anchor="middle">Control plane</text>
+
+        <!-- 2 Build and reuse -->
+        <rect x="16" y="82" width="664" height="44" rx="4" class="svg-box"
+              stroke="var(--control)" stroke-width="1.5"/>
+        <text x="32" y="102" class="svg-title">Build &amp; Reuse</text>
+        <text x="32" y="118" class="svg-label">Asset registry · templates · DQ rules · prompts · enterprise knowledge</text>
+        <text x="672" y="94" class="svg-label" fill="var(--flag)" text-anchor="end">restored</text>
+        <rect x="700" y="90" width="184" height="28" rx="3"
+              fill="var(--control-soft)" stroke="var(--control)"/>
+        <text x="792" y="109" class="svg-label" fill="var(--control)" text-anchor="middle">Control plane</text>
+
+        <!-- 3 Agents -->
+        <rect x="16" y="136" width="664" height="52" rx="4" class="svg-box" stroke="var(--line-strong)"/>
+        <text x="32" y="156" class="svg-title">Agents &amp; Orchestration</text>
+        <text x="32" y="172" class="svg-label">Orchestrator plans and delegates · Data Engineering · Data Quality</text>
+        <text x="32" y="186" class="svg-label" fill="var(--flag)">three agents, not nine</text>
+        <rect x="700" y="144" width="88" height="28" rx="3"
+              fill="var(--control-soft)" stroke="var(--control)"/>
+        <text x="744" y="163" class="svg-label" fill="var(--control)" text-anchor="middle">Orchestr.</text>
+        <rect x="796" y="144" width="88" height="28" rx="3"
+              fill="var(--execution-soft)" stroke="var(--execution)"/>
+        <text x="840" y="163" class="svg-label" fill="var(--execution)" text-anchor="middle">Agents</text>
+
+        <!-- 4 Execution -->
+        <rect x="16" y="198" width="664" height="44" rx="4" class="svg-box" stroke="var(--line-strong)"/>
+        <text x="32" y="218" class="svg-title">Agent Execution Plane</text>
+        <text x="32" y="234" class="svg-label">plan → tool → generate → validate → approve → deploy → monitor</text>
+        <rect x="700" y="206" width="184" height="28" rx="3"
+              fill="var(--execution-soft)" stroke="var(--execution)"/>
+        <text x="792" y="225" class="svg-label" fill="var(--execution)" text-anchor="middle">Execution plane</text>
+
+        <!-- 5 Connectivity -->
+        <rect x="16" y="252" width="664" height="44" rx="4" class="svg-box"
+              stroke="var(--execution)" stroke-width="1.5"/>
+        <text x="32" y="272" class="svg-title">Connectivity &amp; Tool Plane · MCP Gateway</text>
+        <text x="32" y="288" class="svg-label">every tool call authorised, identity-bound and traced here</text>
+        <rect x="700" y="260" width="184" height="28" rx="3"
+              fill="var(--execution-soft)" stroke="var(--execution)"/>
+        <text x="792" y="279" class="svg-label" fill="var(--execution)" text-anchor="middle">Execution plane</text>
+
+        <!-- 6 Data platform -->
+        <rect x="16" y="306" width="664" height="44" rx="4" class="svg-box" stroke="var(--line-strong)"/>
+        <text x="32" y="326" class="svg-title">Data &amp; AI Platform · Azure Databricks</text>
+        <text x="32" y="342" class="svg-label">Lakeflow · Delta Bronze/Silver/Gold · Unity Catalog · MLflow · Genie</text>
+        <rect x="700" y="314" width="184" height="28" rx="3"
+              fill="var(--execution-soft)" stroke="var(--execution)"/>
+        <text x="792" y="333" class="svg-label" fill="var(--execution)" text-anchor="middle">Customer tenant</text>
+
+        <!-- 7 Consumption -->
+        <rect x="16" y="360" width="664" height="44" rx="4" class="svg-box" stroke="var(--line-strong)"/>
+        <text x="32" y="380" class="svg-title">Consumption &amp; Business Value</text>
+        <text x="32" y="396" class="svg-label">Genie · Power BI · ML apps · data products &amp; APIs · enterprise apps</text>
+        <rect x="700" y="368" width="184" height="28" rx="3"
+              fill="var(--execution-soft)" stroke="var(--execution)"/>
+        <text x="792" y="387" class="svg-label" fill="var(--execution)" text-anchor="middle">Customer tenant</text>
+
+        <!-- 8 Govern -->
+        <rect x="16" y="414" width="664" height="44" rx="4" class="svg-box" stroke="var(--line-strong)"/>
+        <text x="32" y="434" class="svg-title">Govern &amp; Operate</text>
+        <text x="32" y="450" class="svg-label">Entra ID · Unity Catalog · Purview · Key Vault · audit · FinOps</text>
+        <rect x="700" y="422" width="88" height="28" rx="3"
+              fill="var(--control-soft)" stroke="var(--control)"/>
+        <text x="744" y="441" class="svg-label" fill="var(--control)" text-anchor="middle">Policy</text>
+        <rect x="796" y="422" width="88" height="28" rx="3"
+              fill="var(--execution-soft)" stroke="var(--execution)"/>
+        <text x="840" y="441" class="svg-label" fill="var(--execution)" text-anchor="middle">Enforce</text>
+
+        <text x="16" y="482" class="svg-label">
+          Security is split deliberately: policy is authored centrally, enforcement happens at the gateway on every call.
+        </text>
+        <text x="16" y="496" class="svg-label">
+          Genie appears three times on purpose — the Genie agent operates Genie Spaces, which surface through Genie.
+        </text>
+      </svg>
+      <figcaption>
+        Six of the eight layers run entirely inside the customer's subscription. Only
+        the front door, the asset registry and central policy authoring sit with us —
+        and none of those three touch a row of customer data.
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ============================================ THE LOOP -->
+  <section>
+    <h2>Inside the execution plane</h2>
+    <h3>Where the human sits, and what their approval is bound to</h3>
+
+    <p>
+      The seven steps are unchanged from v2. What v3 adds is the thing that makes the
+      approval meaningful: a human approves a <strong>specific artifact digest</strong>,
+      not a run. If the agent regenerates after approval, the deploy is refused.
+    </p>
+
+    <figure>
+      <svg viewBox="0 0 900 248" role="img"
+           aria-label="The seven-step agent loop from plan to monitor. Validation runs before approval. The human approval binds to an artifact digest, which is re-checked at the deploy step; a mismatch refuses the deploy. Failed validation retries back to generate, capped at three attempts.">
+        <defs>
+          <marker id="ar-step" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+          <marker id="ar-bind" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--control)"/>
+          </marker>
+        </defs>
+
+        <!-- retry arc -->
+        <path d="M 508 92 C 508 52, 300 52, 300 92" fill="none" stroke="currentColor"
+              stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#ar-step)"/>
+        <text x="404" y="50" class="svg-label" text-anchor="middle">retry · max 3 attempts</text>
+
+        <!-- steps -->
+        <g>
+          <rect x="16" y="96" width="106" height="46" rx="4" class="svg-box" stroke="var(--line-strong)"/>
+          <text x="69" y="118" class="svg-title" text-anchor="middle">plan</text>
+          <text x="69" y="132" class="svg-label" text-anchor="middle">+ registry</text>
+
+          <rect x="139" y="96" width="106" height="46" rx="4" class="svg-box" stroke="var(--line-strong)"/>
+          <text x="192" y="118" class="svg-title" text-anchor="middle">tool</text>
+          <text x="192" y="132" class="svg-label" text-anchor="middle">via gateway</text>
+
+          <rect x="262" y="96" width="106" height="46" rx="4" class="svg-box" stroke="var(--line-strong)"/>
+          <text x="315" y="118" class="svg-title" text-anchor="middle">generate</text>
+          <text x="315" y="132" class="svg-label" text-anchor="middle">artifact</text>
+
+          <rect x="385" y="96" width="106" height="46" rx="4" class="svg-box" stroke="var(--line-strong)"/>
+          <text x="438" y="118" class="svg-title" text-anchor="middle">validate</text>
+          <text x="438" y="132" class="svg-label" text-anchor="middle">tests · dry run</text>
+
+          <rect x="508" y="96" width="106" height="46" rx="4" class="svg-box"
+                stroke="var(--control)" stroke-width="1.8"/>
+          <text x="561" y="118" class="svg-title" text-anchor="middle" fill="var(--control)">approve</text>
+          <text x="561" y="132" class="svg-label" text-anchor="middle" fill="var(--control)">human · PR</text>
+
+          <rect x="631" y="96" width="106" height="46" rx="4" class="svg-box" stroke="var(--line-strong)"/>
+          <text x="684" y="118" class="svg-title" text-anchor="middle">deploy</text>
+          <text x="684" y="132" class="svg-label" text-anchor="middle">dev→test→prod</text>
+
+          <rect x="754" y="96" width="106" height="46" rx="4" class="svg-box" stroke="var(--line-strong)"/>
+          <text x="807" y="118" class="svg-title" text-anchor="middle">monitor</text>
+          <text x="807" y="132" class="svg-label" text-anchor="middle">+ rollback</text>
+        </g>
+
+        <!-- connectors -->
+        <g stroke="currentColor" stroke-width="1.4" marker-end="url(#ar-step)">
+          <line x1="122" y1="119" x2="133" y2="119"/>
+          <line x1="245" y1="119" x2="256" y2="119"/>
+          <line x1="368" y1="119" x2="379" y2="119"/>
+          <line x1="491" y1="119" x2="502" y2="119"/>
+          <line x1="614" y1="119" x2="625" y2="119"/>
+          <line x1="737" y1="119" x2="748" y2="119"/>
+        </g>
+
+        <!-- checkpoint marks -->
+        <circle cx="502" cy="86" r="3" fill="var(--flag)"/>
+        <text x="502" y="78" class="svg-label" fill="var(--flag)" text-anchor="middle">checkpoint</text>
+        <circle cx="625" cy="86" r="3" fill="var(--flag)"/>
+
+        <!-- digest binding -->
+        <path d="M 561 148 C 561 186, 684 186, 684 152" fill="none"
+              stroke="var(--control)" stroke-width="1.5" marker-end="url(#ar-bind)"/>
+        <text x="622" y="204" class="svg-label" fill="var(--control)" text-anchor="middle">
+          artifact digest bound here, re-checked here
+        </text>
+        <text x="622" y="219" class="svg-label" text-anchor="middle">
+          mismatch → deploy refused, approval void
+        </text>
+
+        <text x="16" y="240" class="svg-label">
+          Validation runs before approval on purpose: a human's attention is the scarcest resource in this loop.
+        </text>
+      </svg>
+      <figcaption>
+        Checkpoints are taken before the steps that can change the world, not after,
+        so a retry never resumes into a partially applied deploy. The agent opens a
+        pull request and never merges one — which is both the safety property and the
+        reason the diff between proposed and merged gives us an honest quality metric.
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ============================================ IDENTITY -->
+  <section>
+    <h2>Agent identity</h2>
+    <h3>One principal per agent, per tenant, per environment</h3>
+
+    <p>
+      "The agent runs as the platform service account" does not survive a security
+      review: it grants every agent the union of all permissions and makes the audit
+      log useless, because every action attributes to one identity. Instead:
+    </p>
+
+    <div class="callout">
+      <h4>The intersection rule</h4>
+      <p style="font-family:var(--mono);font-size:14px">
+        effective&nbsp;=&nbsp;agent_permissions&nbsp;∩&nbsp;invoking_user_permissions
+      </p>
+      <p>
+        An agent invoked by an analyst cannot write to a schema that analyst cannot
+        write to, even where the agent's own principal could. Without this, invoking
+        an agent becomes a privilege-escalation path — the classic confused deputy.
+      </p>
+    </div>
+
+    <p>
+      Principals are federated, so there is no secret to rotate or leak; tokens are
+      scoped to a single run and expire in fifteen minutes. Destructive operations —
+      <code>DROP</code>, <code>TRUNCATE</code>, force-push, merge — are not
+      policy-gated, they are <strong>absent</strong>: no tool implements them.
+    </p>
+  </section>
+
+  <!-- ============================================ METRIC -->
+  <section>
+    <h2>How we will know it works</h2>
+    <h3>Acceptance rate, reported honestly</h3>
+
+    <p>
+      The metric is the percentage of agent outputs merged <em>without human edit</em>.
+      It is always reported alongside median edit ratio and <code>n</code>, because a
+      run "accepted" after a human rewrote half of it is not a success, and an 80%
+      acceptance rate over five runs is noise.
+    </p>
+
+    <p>
+      The same telemetry tests the reuse thesis directly: runs that used a registry
+      asset should show measurably higher acceptance than runs that did not. If that
+      gap has not appeared by month three, the thesis is wrong and the roadmap
+      changes. The comparison is built into the evaluation layer rather than left as
+      an analysis someone might run.
+    </p>
+  </section>
+
+  <footer>
+    v3 · September 2026 · Supersedes v1 and v2.
+    Decisions recorded in ADR-0001 (tenancy), ADR-0002 (agent identity) and
+    ADR-0003 (trace model).
+  </footer>
+
+</div>

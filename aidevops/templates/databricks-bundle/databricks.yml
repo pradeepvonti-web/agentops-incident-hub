@@ -1,0 +1,88 @@
+# Databricks Asset Bundle -- root configuration.
+#
+# This is the template the Data Engineering agent generates into. It is also a
+# deliverable in its own right: a client not yet using bundles adopts this first,
+# before any agent touches anything.
+#
+# The shape follows the pattern that holds up at scale: shared parameters here,
+# one file per job under resources/, code under source/, and a single `main`
+# promoted dev -> test -> prod through approval gates rather than a branch per
+# environment. Stale environment branches are the thing this replaces.
+#
+# What the agent writes:  resources/<job>.yml  and  source/<pipeline>.py
+# What the agent never writes:  this file's targets, or anything under .azure/
+#
+# Those are platform-team property. An agent that can edit its own deployment
+# targets can promote its own work to prod, which is the whole thing we are
+# preventing.
+
+bundle:
+  name: acme-data-platform
+
+include:
+  - resources/*.yml
+
+# Shared across every job. With a hundred jobs these are the hundred places you
+# would otherwise have to change a cluster version or a service principal.
+variables:
+  catalog:
+    description: Unity Catalog catalog for this target
+    default: bronze
+
+  spark_version:
+    description: Runtime for all job clusters. Change here, not per job.
+    default: "15.4.x-scala2.12"
+
+  node_type_id:
+    description: Azure VM size for job clusters
+    default: Standard_DS3_v2
+
+  service_principal_id:
+    description: >-
+      Application id of the service principal that owns deployed jobs. Set per
+      target below; never defaulted, so a missing value fails validation rather
+      than silently running as whoever deployed.
+
+targets:
+  # Development. Each engineer (and each agent) gets an isolated deployment under
+  # their own name, so two people working at once do not overwrite each other.
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-REPLACE-dev.azuredatabricks.net
+    variables:
+      catalog: bronze_dev
+
+  test:
+    mode: production
+    workspace:
+      host: https://adb-REPLACE-test.azuredatabricks.net
+      root_path: /Shared/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      catalog: bronze_test
+      service_principal_id: REPLACE-test-sp-application-id
+    run_as:
+      service_principal_name: ${var.service_principal_id}
+    permissions:
+      - level: CAN_VIEW
+        group_name: data-engineering
+
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-REPLACE-prod.azuredatabricks.net
+      root_path: /Shared/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      catalog: gold
+      service_principal_id: REPLACE-prod-sp-application-id
+    # Deployed jobs run as the service principal, not as the person or agent who
+    # triggered the pipeline. This is what makes the audit trail answer "what
+    # deployed this" rather than "who happened to click merge".
+    run_as:
+      service_principal_name: ${var.service_principal_id}
+    permissions:
+      - level: CAN_VIEW
+        group_name: data-engineering
+      - level: CAN_MANAGE
+        group_name: platform-admins

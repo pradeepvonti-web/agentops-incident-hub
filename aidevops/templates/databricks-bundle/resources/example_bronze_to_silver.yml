@@ -1,0 +1,72 @@
+# One job, one file. This is the shape the Data Engineering agent generates.
+#
+# Everything environment-specific comes from `${var.*}`, resolved per target in
+# databricks.yml. A hard-coded catalog or cluster size here is the bug that makes
+# dev and prod diverge, and it is the first thing a reviewer should look for in
+# an agent-authored resource.
+
+resources:
+  jobs:
+    bronze_to_silver_sales_orders:
+      name: "[${bundle.target}] Bronze to Silver - sales_orders"
+      description: >-
+        Reads raw sales orders from bronze, applies type coercion and null
+        handling on ship_date, and writes the curated Silver table keyed on
+        delivery_id.
+
+      tags:
+        layer: silver
+        domain: sales
+        # Provenance, so agent-authored jobs are identifiable in the workspace
+        # and in cost reporting. Set by the agent, checked by the reviewer.
+        authored_by: ai-devops-agent
+
+      email_notifications:
+        on_failure:
+          - data-engineering@example.com
+
+      # Concurrency 1: a second run overlapping the first would write the same
+      # target twice. Overridable per job where the work is genuinely parallel.
+      max_concurrent_runs: 1
+
+      job_clusters:
+        - job_cluster_key: default
+          new_cluster:
+            spark_version: ${var.spark_version}
+            node_type_id: ${var.node_type_id}
+            num_workers: 2
+            data_security_mode: SINGLE_USER
+
+      tasks:
+        - task_key: transform
+          job_cluster_key: default
+          spark_python_task:
+            python_file: ../source/bronze_to_silver_sales_orders.py
+            parameters:
+              - --catalog
+              - ${var.catalog}
+              - --target
+              # Via the variable, not literally. A hard-coded catalog here is
+              # the single most common review rejection -- and the extractor
+              # caught this one in our own template.
+              - ${var.catalog}.curated.sales_orders
+
+        # Quality gate in the job, not after it. A Silver table that fails its
+        # own checks should not be available for anything downstream to read.
+        - task_key: quality_checks
+          depends_on:
+            - task_key: transform
+          job_cluster_key: default
+          spark_python_task:
+            python_file: ../source/checks_sales_orders.py
+            parameters:
+              - --catalog
+              - ${var.catalog}
+
+      schedule:
+        quartz_cron_expression: "0 0 6 * * ?"
+        timezone_id: UTC
+        # Deployed paused; a human unpauses after the first successful manual
+        # run. An agent-authored job that starts running on a schedule the moment
+        # it merges is how a bad pipeline runs 40 times overnight.
+        pause_status: PAUSED

@@ -24,3 +24,14 @@ jobs:
         env:
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
+
+  aidevops:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: cd aidevops && uv sync
+      - run: cd aidevops && uv run ruff check .
+      # 6 tests skip without DATABASE_URL; the rest are security-property tests
+      # over fakes and need no network.
+      - run: cd aidevops && uv run pytest

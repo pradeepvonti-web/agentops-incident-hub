@@ -2,13 +2,25 @@
 
 https://github.com/pradeepvonti-web/agentops-incident-hub · [CI](https://github.com/pradeepvonti-web/agentops-incident-hub/actions)
 
-A small but complete reference project for learning **agentic engineering**:
-context engineering, deterministic tooling, reusable skills, validation,
-and parallel-agent-friendly development.
+A complete reference project for learning **agentic engineering**: context
+engineering, deterministic tooling, reusable skills, validation, and
+parallel-agent-friendly development.
 
-The product is **Restora**; the repository keeps its original name,
-`agentops-incident-hub`, as does the database schema, `agentops`. Both are
-identifiers, not brand.
+It is one platform with two products in one shell:
+
+- **Restora** — incident management: on-call, alerts, incidents, status pages,
+  post-incident review. The repository root.
+- **AI DevOps** — an agentic control plane for data engineering on Azure +
+  Databricks: agents plan, generate and validate pipelines, humans approve them
+  as pull requests, everything is traced. `aidevops/`, with its own README and
+  architecture decision records.
+
+They share one Supabase project, one sign-in and one sidebar, and they meet in
+the database: a failed agent run raises a Restora alert
+(`aidevops/docs/adr/0005-one-platform-with-restora.md`).
+
+The repository keeps its original name, `agentops-incident-hub`, as does
+Restora's database schema, `agentops`. Both are identifiers, not brand.
 
 ## Features
 
@@ -27,15 +39,19 @@ identifiers, not brand.
 - FastAPI service for agents, with an SSE stream and an inbound alert webhook
 - Marketing site with GSAP scroll animation, a three.js hero, an interactive incident channel and a generated demo video
 - Deterministic incident-triage scripts, backend tests, GitHub Actions CI
+- AI DevOps: a run composer, runs grouped by status, run detail with the span
+  trace, approvals bound to an artifact digest and gated by role, entry-point
+  adoption, and a control plane with forced row-level security per tenant
 
 ## Architecture
 
 ```text
-      Supabase Postgres (schema: agentops)
-      RLS · triggers · SQL functions · Realtime
-         |                          |
-   React app (browser)        FastAPI /api/v1
-   auth, reads, writes        agents, SSE, webhooks
+              Supabase Postgres, one project
+     schema agentops (Restora)     schema public (AI DevOps)
+         |            |                     |
+   React app ---- FastAPI /api/v1     Control plane API
+   one shell,     agents, SSE,        aidevops/, tenant-scoped,
+   both products  webhooks            reads via the session token
 ```
 
 `docs/ARCHITECTURE.md` has the file-by-file map, `docs/DATABASE.md` the schema
@@ -66,6 +82,18 @@ Open http://localhost:5173 and create an account. Signing up with a seeded
 responder's address (for example `sam.lee@agentops.example`) adopts that
 person's history.
 
+The AI DevOps section needs its control plane:
+
+```bash
+cd aidevops
+cp .env.example .env     # DATABASE_URL, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY
+uv sync
+uv run uvicorn control_plane.api.app:app --port 8010
+```
+
+Without `DATABASE_URL` it still starts and every AI DevOps screen says exactly
+that. `aidevops/README.md` covers tenant membership and the dev-only fallback.
+
 The agent-facing API is optional:
 
 ```bash
@@ -93,8 +121,14 @@ cd frontend
 npm run build
 ```
 
-Backend tests run offline and assert how the service behaves with no Supabase
-credentials, which is the state a fresh clone starts in.
+```bash
+cd aidevops
+uv run ruff check .
+uv run pytest
+```
+
+Backend and control plane tests run offline and assert how each service behaves
+with no credentials, which is the state a fresh clone starts in.
 
 ### Run incident triage
 
@@ -111,14 +145,20 @@ insights, catalog, workflows, command palette, live updates, public status,
 the marketing site, the agent API, migrations, CI.
 
 Not built yet: onboarding, a settings area (custom fields, roles, API keys),
-post-mortem documents, saved views, generated database types, multi-tenancy.
-`docs/BUILDING_RESTORA.md` says why each is missing.
+post-mortem documents, saved views, generated database types, multi-tenancy for
+Restora itself. `docs/BUILDING_RESTORA.md` says why each is missing.
+
+AI DevOps, built: contracts, policy engine, approval binding, tenant-scoped
+store, the portal API and identity, the shell screens, the alert bridge,
+migrations. Stubbed: model calls, the orchestrator, execution-plane identity,
+the Azure DevOps and MCP bindings. `aidevops/README.md` keeps the exact list.
 
 ## Companion articles
 
 - `docs/ARTICLE.md` — why: the agentic-engineering write-up this repository accompanies.
 - `docs/BUILDING_RESTORA.md` — how: a walk through the codebase, the database rules, and the decisions.
 - `docs/BUILD_WITH_CLAUDE_CODE.md` — step by step: the twelve stages, the prompts used, and what to check at each.
+- `aidevops/docs/adr/` — the decisions behind the control plane, and ADR-0005 on merging the two products.
 
 ## Learning path
 

@@ -1,0 +1,49 @@
+[project]
+name = "aidevops-platform"
+version = "0.1.0"
+description = "Data & Analytics AI DevOps Platform"
+requires-python = ">=3.11"
+dependencies = [
+    "adp-contracts",
+    "mcp-gateway",
+    "control-plane",
+    "agent-runtime",
+]
+
+[tool.uv.workspace]
+members = [
+    "packages/adp-contracts",
+    "control-plane",
+    "execution-plane/mcp-gateway",
+    "execution-plane/agent-runtime",
+]
+
+[tool.uv.sources]
+adp-contracts = { workspace = true }
+mcp-gateway = { workspace = true }
+control-plane = { workspace = true }
+agent-runtime = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "packages/adp-contracts/tests",
+    "control-plane/tests",
+    "execution-plane/mcp-gateway/tests",
+    "execution-plane/agent-runtime/tests",
+]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 95
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

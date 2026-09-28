@@ -11,3 +11,13 @@ screenshots/*
 .env
 .env.local
 .DS_Store
+
+# aidevops/ (uv workspace, Terraform)
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+traces-*.jsonl

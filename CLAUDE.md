@@ -1,4 +1,9 @@
-# Restora — Project Context
+# Restora + AI DevOps — Project Context
+
+One repository, one platform: Restora (incident management, the root) and the
+AI DevOps control plane (`aidevops/`, agentic data engineering). One Supabase
+project, one shell, one session. `aidevops/docs/adr/0005-one-platform-with-restora.md`
+is the decision; `aidevops/README.md` and its ADRs are the context for that half.
 
 ## Architecture
 - Database: Supabase Postgres, schema `agentops` (see `docs/DATABASE.md`)
@@ -9,6 +14,8 @@
   `supabase db push` (or the Supabase MCP server, then re-exported to the folder)
 - Marketing site: `frontend/src/pages/Landing.tsx`, `frontend/src/marketing/`,
   `frontend/src/marketing.css`; the product app is everything else
+- AI DevOps: FastAPI control plane in `aidevops/control-plane` (port 8010, `uv`),
+  its screens in `frontend/src/pages/devops/`, its client `frontend/src/lib/controlPlane.ts`
 - `sample-data/` is the offline fixture the API, scripts and tests use, and the
   source the seed migrations were generated from. Keep the two in step.
 
@@ -56,6 +63,14 @@ Triage through Monitoring are "active". The definition lives in
 - New tables need RLS policies in the same migration that creates them.
 - Reference data (catalog, alerts, on-call, workflows, status page) is served by
   `PlatformService`, not `IncidentService`.
+- The control plane's tables (`public.*`) are never read from the browser. The
+  shell calls the control plane API with the Supabase session; the API opens a
+  tenant scope. Do not add PostgREST grants on `public` to make a screen easier.
+- In `aidevops/`, every read of tenant data goes through `Database.tenant_scope`;
+  `resolve_membership` is the one pre-scope query and stays the only one.
+- A new tenant-scoped table goes in `TENANT_SCOPED_TABLES` in the same change.
+- The shell's copy of the six entry points is `frontend/src/devops/entry.ts`;
+  a contract test diffs it against the Python list.
 - The logo is `frontend/src/components/Logo.tsx` and nothing else; the favicon and
   icons are rendered from `frontend/public/logo.svg`.
 - Brand colours: green `#1f8a4c` is the brand, orange `#f25533` is reserved for
@@ -69,6 +84,8 @@ Triage through Monitoring are "active". The definition lives in
 - Backend behavior changes require pytest coverage; the suite must stay runnable
   with no Supabase credentials.
 - Tests run as `cd backend && pytest`; `backend/pytest.ini` puts `backend/` on the path.
+- The control plane: `cd aidevops && uv run ruff check . && uv run pytest`; the
+  suite must stay runnable with no DATABASE_URL (those tests skip).
 - The frontend must pass `npm run build` (`tsc -b` included) before a change is done.
 - Run the Supabase security advisor after DDL and resolve anything it flags, or
   write down why the finding is intended.

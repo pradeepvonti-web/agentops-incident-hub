@@ -1,7 +1,7 @@
 # Reproducing the database
 
-Everything Restora stores lives in the `agentops` schema. These migrations
-create it from nothing: types, tables, functions, triggers, row-level security,
+One database, two schemas: Restora in `agentops`, the AI DevOps control plane in
+`public` (`aidevops/`). These migrations create both from nothing: types, tables, functions, triggers, row-level security,
 seed data, views, the realtime publication. They are the exact statements that
 were applied to the reference project, exported from
 `supabase_migrations.schema_migrations`, so `supabase db push` replays history
@@ -46,6 +46,17 @@ project URL and publishable key.
 | `…_tighten_anon_grants` | anonymous readers see only the status page |
 | `…_status_feed` | the public status projection (deliberately not `security_invoker`) |
 
+And the control plane's (`aidevops/`), which sort first by version:
+
+| File | Purpose |
+|------|---------|
+| `…_initial_control_plane_schema` | tenants, runs, spans, outcomes, approvals, registry, evaluation; RLS forced |
+| `…_add_non_bypassing_app_role` | `adp_app` and `begin_tenant_scope()` (ADR-0001 Amendment 1) |
+| `…_harden_grants_and_search_path` | no PostgREST access to `public`; fixed search path |
+| `…_adp_tenant_members` | Supabase user to tenant mapping (ADR-0005) |
+| `…_platform_bridge_run_failures_to_alerts` | a failed or rolled-back run raises an `agentops` alert |
+| `…_adp_seed_run_spans` | demo traces for the two seeded runs |
+
 The reasoning behind the RLS design and the definer view is in
 `docs/DATABASE.md`.
 
@@ -57,7 +68,7 @@ re-export so the folder stays the source of truth:
 ```sql
 select version, name, array_to_string(statements, E'\n\n') as sql
 from supabase_migrations.schema_migrations
-where name like 'agentops_%' order by version;
+order by version;
 ```
 
 One file per row, named `<version>_<name>.sql`.

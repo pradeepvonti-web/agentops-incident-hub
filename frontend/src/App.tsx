@@ -14,6 +14,10 @@ import { PostIncident } from "./pages/PostIncident";
 import { PublicStatus } from "./pages/PublicStatus";
 import { StatusPageView } from "./pages/StatusPageView";
 import { Workflows } from "./pages/Workflows";
+import { DevOpsHome } from "./pages/devops/DevOpsHome";
+import { EntryPoints } from "./pages/devops/EntryPoints";
+import { RunDetail } from "./pages/devops/RunDetail";
+import { Runs } from "./pages/devops/Runs";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
@@ -61,6 +65,13 @@ export default function App() {
             <Route path="insights" element={<InsightsPage />} />
             <Route path="catalog" element={<Catalog />} />
             <Route path="workflows" element={<Workflows />} />
+
+            {/* The AI DevOps control plane, in the same shell and session. */}
+            <Route path="devops" element={<DevOpsHome />} />
+            <Route path="devops/runs" element={<Runs />} />
+            <Route path="devops/approvals" element={<Runs only="awaiting_approval" />} />
+            <Route path="devops/runs/:runId" element={<RunDetail />} />
+            <Route path="devops/entry-points" element={<EntryPoints />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

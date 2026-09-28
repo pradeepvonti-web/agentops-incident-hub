@@ -6,7 +6,8 @@ are written down rather than assumed. Read `CLAUDE.md` first; it is short.
 ## Before you change anything
 
 - Run the checks so you know the baseline is green:
-  `cd backend && pytest` and `cd frontend && npm run build`.
+  `cd backend && pytest`, `cd frontend && npm run build`, and
+  `cd aidevops && uv run pytest`.
 - If the change touches user-facing behaviour, open `evals/dashboard-eval.md`
   and note which checks it affects.
 
@@ -22,6 +23,10 @@ are written down rather than assumed. Read `CLAUDE.md` first; it is short.
 | A repeatable transformation | A script in `scripts/` |
 | A repeated workflow | A `SKILL.md` under `skills/` |
 | Marketing copy or motion | `frontend/src/pages/Landing.tsx`, `frontend/src/marketing/` |
+| A control plane route | `aidevops/control-plane/src/control_plane/api/`, with a test in `aidevops/control-plane/tests/` |
+| A control plane query | `aidevops/control-plane/src/control_plane/store/runs.py`, inside a tenant scope |
+| An AI DevOps screen | One file in `frontend/src/pages/devops/`, data via `frontend/src/lib/controlPlane.ts` |
+| A decision that is expensive to reverse | An ADR under `aidevops/docs/adr/` |
 
 ## Database changes
 
@@ -33,7 +38,7 @@ tests read it.
 
 ## Finishing a change
 
-1. Tests pass with no Supabase credentials configured.
+1. Tests pass with no Supabase credentials configured, in `backend/` and in `aidevops/`.
 2. `npm run build` passes.
 3. The relevant eval checks were walked, in a browser, and anything that could
    not be verified is stated.

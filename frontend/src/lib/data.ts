@@ -318,6 +318,22 @@ export async function getAlerts(): Promise<{
   };
 }
 
+/**
+ * Alerts the database raised for one AI DevOps run. The bridge trigger stores
+ * the run id in the alert payload, so this is a payload filter, not a join --
+ * the control plane's tables are not readable from the browser (ADR-0005).
+ */
+export async function getAlertsForRun(runId: string): Promise<AlertRow[]> {
+  const rows = await supabase
+    .from("alerts")
+    .select(
+      `id, reference, title, priority, status, received_at, acknowledged_at, source:alert_sources(id, name), acknowledged_by:users(${PERSON}), incident:incidents(id, reference)`
+    )
+    .eq("payload->>run_id", runId)
+    .order("received_at", { ascending: false });
+  return (rows.data ?? []) as unknown as AlertRow[];
+}
+
 export async function getOnCall(): Promise<{
   schedules: Schedule[];
   escalation_paths: EscalationPath[];

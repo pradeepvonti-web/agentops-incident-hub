@@ -1,0 +1,106 @@
+# Per-agent tool authorisation. Implements ADR-0002 §3 (fine-grained layer).
+#
+# This file is the *declared intent*. It is not the only boundary — Azure RBAC and
+# Unity Catalog grants are the real one, provisioned from infra/terraform. This layer
+# exists because it fails earlier, with a comprehensible error, and because it gives
+# the security review a single readable artifact.
+#
+# Default is deny. An agent with no entry here can call nothing.
+
+version: 1
+
+defaults:
+  rate_limit_per_hour: 200
+  max_tool_duration_seconds: 300
+
+agents:
+
+  data-engineering:
+    description: >
+      Generates ingestion and Bronze to Silver transformation pipelines.
+      The first agent, and the only one with write access to job definitions.
+    tools:
+      - name: uc_list_tables
+        constraints:
+          catalog_allowlist: ["bronze", "silver", "raw"]
+
+      - name: uc_get_table_metadata
+        constraints:
+          catalog_allowlist: ["bronze", "silver", "raw"]
+
+      # Dev only, and deliberately so. This is the agent's own iteration loop --
+      # a way to try a transformation against dev data before writing it into a
+      # bundle. It is NOT a deployment path. Deployment happens through the
+      # customer's CI/CD from the bundle we open a pull request with
+      # (ADR-0002 Amendment 1).
+      - name: databricks_submit_job
+        constraints:
+          environments: ["dev"]
+          max_cluster_workers: 8
+          # Single-quoted: YAML double quotes would treat \. as an escape.
+          target_schema_pattern: '^(bronze|silver)\.'
+
+      # The plan step. Writes nothing; the same command their reviewer runs.
+      - name: databricks_bundle_validate
+        constraints:
+          environments: ["dev", "test", "prod"]
+
+      - name: databricks_bundle_summary
+        constraints:
+          environments: ["dev", "test", "prod"]
+
+      - name: git_open_pull_request
+        constraints:
+          # The agent proposes; a human merges. It cannot push to a default branch
+          # and it cannot merge its own PR.
+          branch_prefix: "agent/"
+          protected_branches_denied: ["main", "master", "release/*"]
+          max_files_changed: 25
+
+    rate_limit_per_hour: 300
+
+  data-quality:
+    description: >
+      Profiles data, validates against registry rules, reconciles between layers.
+      Read-only against data; writes only test definitions.
+    tools:
+      - name: uc_list_tables
+        constraints:
+          catalog_allowlist: ["bronze", "silver", "gold"]
+
+      - name: uc_get_table_metadata
+        constraints:
+          catalog_allowlist: ["bronze", "silver", "gold"]
+
+      - name: databricks_bundle_validate
+        constraints:
+          environments: ["dev", "test", "prod"]
+
+      - name: git_open_pull_request
+        constraints:
+          branch_prefix: "agent/dq-"
+          protected_branches_denied: ["main", "master", "release/*"]
+          max_files_changed: 10
+
+  orchestrator:
+    description: >
+      Plans and delegates. Deliberately has no data-system tools at all — it cannot
+      touch customer systems directly, only decide which agent should.
+    tools: []
+
+# Tools that exist in no allowlist and are not implemented in v0.
+# Recorded here so the absence is visible to a security reviewer and so nobody adds
+# one without noticing this list (ADR-0002 section 6: absent, not merely gated).
+never_expose:
+  - drop_table
+  - truncate_table
+  - git_force_push
+  - git_merge_pull_request
+  - databricks_delete_job
+  - uc_grant_privilege
+  # Deployment is the customer's pipeline, not ours. The agent produces bundle
+  # files and opens a pull request; their CI/CD validates, a human approves, and
+  # their CD runs the deploy. Not implemented here, not gated here -- absent.
+  - databricks_bundle_deploy
+  - databricks_bundle_destroy
+  - databricks_bundle_run

@@ -52,6 +52,17 @@
 - [ ] An on-call override takes precedence over the rotation.
 - [ ] A change made in one tab appears in a second tab without reloading.
 
+## AI DevOps (control plane on 8010)
+- [ ] With the control plane stopped, every AI DevOps page shows one clear error naming the control plane, not a blank screen.
+- [ ] With it running but no DATABASE_URL, the error names DATABASE_URL.
+- [ ] Home lists runs awaiting approval and in flight; the sidebar Approvals count matches.
+- [ ] Runs groups by status with counts; empty groups are hidden; the status, agent and environment filters narrow the list.
+- [ ] Run detail shows the span tree with a denied tool call marked, and the artifact digest an approver is deciding on.
+- [ ] A member sees a 403 on approve; an approver's decision moves the run and appears in the approvals list.
+- [ ] Starting a run from the composer lands on its detail page in `queued`.
+- [ ] Marking a run failed in SQL raises an alert under Alerts and on the run's detail page without a reload.
+- [ ] Entry points shows six doors and the adoption bar.
+
 ## Visual
 - [ ] No obvious clipping at desktop width.
 - [ ] Tables scroll rather than squeezing on narrow viewports.

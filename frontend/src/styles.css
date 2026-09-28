@@ -485,3 +485,72 @@ button.check:hover { border-color: var(--ok); }
   .log { grid-template-columns: 1fr; }
   .tlItem { grid-template-columns: 46px 24px 1fr; }
 }
+
+/* ---------- AI DevOps (the control plane screens) ---------- */
+
+.navLabel {
+  color: var(--chrome-muted); font-size: 11px; text-transform: uppercase;
+  letter-spacing: .08em; padding: 14px 10px 4px;
+}
+
+.composer textarea.input { min-height: 96px; }
+
+.runRow {
+  display: grid; grid-template-columns: 10px minmax(0, 1fr) 118px 52px 130px 140px 56px;
+  gap: 12px; align-items: center; padding: 10px 18px;
+  border-top: 1px solid var(--line-soft); font-size: 13px;
+}
+.runRow:first-child { border-top: 0; }
+.runRow:hover { background: var(--page); }
+.runRow .title { font-weight: 550; }
+.runGroup header {
+  display: flex; align-items: center; gap: 8px; padding: 9px 18px;
+  background: var(--page); border-top: 1px solid var(--line-soft);
+  font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600;
+}
+.runGroup:first-child header { border-top: 0; }
+.runGroup header .count {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 20px;
+  padding: 0 7px; font-size: 11px; color: var(--ink-soft);
+}
+
+/* Status by glyph, never by row fill. */
+.glyph { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: 0 0 8px; }
+.glyph.awaiting_approval { background: var(--accent-2); }
+.glyph.running { background: var(--accent); }
+.glyph.queued { background: var(--muted); }
+.glyph.succeeded { background: var(--ok); }
+.glyph.failed, .glyph.rolled_back { background: var(--crit); }
+.glyph.rejected, .glyph.cancelled { background: var(--ink-soft); }
+
+.envTag {
+  display: inline-block; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11.5px; padding: 1px 7px; border-radius: 6px;
+  background: var(--line-soft); color: var(--ink-soft);
+}
+.envTag.prod { background: var(--err-bg); color: var(--err); }
+
+.spanRow {
+  display: grid; grid-template-columns: 92px minmax(0, 1fr) 128px 64px;
+  gap: 12px; padding: 10px 18px; border-top: 1px solid var(--line-soft);
+  align-items: start; font-size: 13px;
+}
+.spanRow.child { padding-left: 44px; background: #fbfbfa; }
+.spanRow .title { font-weight: 550; }
+.spanRow .detail { color: var(--muted); font-size: 12px; margin-top: 2px; word-break: break-all; }
+.stepTag {
+  display: inline-block; font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+  padding: 2px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); font-weight: 600;
+}
+.stepTag.denied { background: var(--crit-bg); color: var(--crit); }
+
+.volBar { display: flex; height: 10px; border-radius: 20px; overflow: hidden; background: var(--line-soft); }
+.volLegend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: 12px; color: var(--ink-soft); }
+.swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-right: 6px; flex: 0 0 10px; }
+
+@media (max-width: 900px) {
+  .runRow { grid-template-columns: 10px minmax(0, 1fr) 52px 56px; }
+  .runRow > :nth-child(3), .runRow > :nth-child(5), .runRow > :nth-child(6) { display: none; }
+  .spanRow { grid-template-columns: 80px minmax(0, 1fr); }
+  .spanRow > :nth-child(3), .spanRow > :nth-child(4) { display: none; }
+}

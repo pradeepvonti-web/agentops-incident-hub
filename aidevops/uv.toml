@@ -1,0 +1,3 @@
+# OneDrive and other cloud-synced filesystems do not support hardlinks, which uv
+# uses by default. Copy mode is slightly slower and always works.
+link-mode = "copy"
