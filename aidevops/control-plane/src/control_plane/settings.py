@@ -22,7 +22,7 @@ def dotenv_values(path: str | os.PathLike[str] = ".env") -> dict[str, str]:
     """
     values: dict[str, str] = {}
     try:
-        text = pathlib.Path(path).read_text(encoding="utf-8")
+        text = pathlib.Path(path).read_text(encoding="utf-8-sig")
     except OSError:
         return values
     for raw in text.splitlines():

@@ -52,8 +52,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       }
     });
   } catch {
+    // A network failure, or a 500 whose response carries no CORS headers and is
+    // therefore invisible to the page; the control plane's log has the traceback.
     throw new ControlPlaneError(
-      `The control plane at ${BASE} is not reachable. Start it with the "control-plane" launch configuration or set VITE_CONTROL_PLANE_URL.`,
+      `No answer from the control plane at ${BASE}. If it is not running, start it with the "control-plane" launch configuration or set VITE_CONTROL_PLANE_URL; if it is, check its log for an error.`,
       0
     );
   }

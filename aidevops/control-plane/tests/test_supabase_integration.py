@@ -205,3 +205,20 @@ async def test_approval_moves_the_run_and_is_attributed(db, tenants) -> None:
     run = await repo.get_run(a, run_id)
     assert run is not None
     assert run["status"] == "running"
+
+
+async def test_runs_without_a_key_never_collide(db, tenants) -> None:
+    """Interactive doors send no idempotency key: a human's second submission is
+    a second pipeline. The constraint was once UNIQUE NULLS NOT DISTINCT, which
+    let exactly one keyless run exist per tenant and failed the second with a
+    duplicate-key error. This holds the partial index that replaced it."""
+    a, _ = tenants
+    repo = RunRepository(db)
+
+    first = await _seed(repo, a, "first keyless run")
+    second = await _seed(repo, a, "second keyless run")
+
+    assert first != second
+    assert {r["title"] for r in await repo.list_runs(a)} == {
+        "first keyless run", "second keyless run"
+    }

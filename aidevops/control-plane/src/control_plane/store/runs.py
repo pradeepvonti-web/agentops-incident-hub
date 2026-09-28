@@ -129,7 +129,9 @@ class RunRepository(Repository):
 
         On an idempotency-key collision the existing run is returned rather than a
         second one created. A retried Teams message must not become two pipelines
-        writing the same target.
+        writing the same target. Runs without a key -- every interactive door --
+        never collide: the unique index is partial, so the ON CONFLICT target
+        names the same predicate.
         """
         async with self._db.tenant_scope(tenant_id) as conn:
             row = await conn.fetchrow(
@@ -141,7 +143,8 @@ class RunRepository(Repository):
                 )
                 values ($1, $2, $3::agent_type, $4::environment, $5, $6,
                         $7::entry_source, $8, $9, $10)
-                on conflict (tenant_id, idempotency_key) do nothing
+                on conflict (tenant_id, idempotency_key)
+                    where idempotency_key is not null do nothing
                 returning """ + _RUN_COLUMNS,
                 run_id, tenant_id, agent, environment, invoked_by,
                 agent_principal, entry_source, digest(requirement), title,
