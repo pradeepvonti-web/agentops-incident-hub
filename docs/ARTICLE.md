@@ -20,8 +20,10 @@ I wrote a first version of this article about a week after the course, with a
 tidy diagram and an invented example application. Then I did what the course
 kept telling me to do and put the agent to work on a real repository. The
 example became a real product — **Restora**, an incident management platform
-that started life as *AgentOps Incident Hub* — and almost every concept below
-now has a story attached to it, usually one where something went wrong first.
+that started life as *AgentOps Incident Hub* — and then a second product, an
+agentic data-engineering control plane called **AI DevOps**, was merged into
+the same repository and the same shell. Almost every concept below now has a
+story attached to it, usually one where something went wrong first.
 
 This article explains each concept in plain terms, says why it matters, and
 then shows what it actually looked like in this build. The repository is public
@@ -38,13 +40,24 @@ insights. What exists today is a Supabase Postgres schema with 26 tables and
 row-level security, a React application that reads and writes through Supabase
 and updates live across browser tabs, a FastAPI service for agents with an SSE
 event stream and an alert webhook, a marketing site, 26 backend tests, and
-roughly 7,000 lines of frontend code — all built with Claude Code driving and me
-steering.
+roughly 8,000 lines of frontend code — plus, since the merge, a second FastAPI
+service with forced per-tenant row-level security and 171 tests of its own —
+all built with Claude Code driving and me steering.
 
 I chose incident response deliberately. It is repetitive enough to automate,
 judgement-heavy enough that you cannot script it end to end, and full of rules
 that live in people's heads rather than in the code. That is exactly the
 terrain agentic engineering is meant for.
+
+The second product is the other side of the same coin. AI DevOps is a control
+plane where agents plan, generate and validate Databricks pipelines, humans
+approve them as pull requests, and every step is traced so the acceptance rate
+can be measured honestly. It had been built separately, against the same
+Supabase project, with its own architecture decision records and 128
+security-property tests. Merging it into Restora — one repository, one shell,
+one sign-in — turned out to be the best exercise of the whole framework,
+because it forced every concept to hold across two codebases at once. The
+merge has its own section below.
 
 ---
 
@@ -433,6 +446,78 @@ migration.
 
 ---
 
+## The merge: two products, one platform
+
+Near the end I handed the agent a zip of the second codebase and said
+"combine with Restora." That is an ambiguous instruction, and what happened
+next is the framework working as described.
+
+**It asked before it built (Concept 14).** "Combine" could mean four
+materially different things — wire the products together at their existing
+seams, merge the repositories into one platform, apply Restora's agentic
+scaffolding to the other codebase, or just write about both. The agent read
+the second codebase first, laid out the four readings with what each would
+cost, recommended one, and waited. I chose the biggest: one repository, one
+platform. An agent that had guessed would have spent an hour on the wrong one.
+
+**It found the seam in the code, not in a diagram (Concept 1).** Both products
+already lived in the same Supabase project — Restora in its `agentops` schema,
+the control plane in `public` — and the control plane's own migration had
+deliberately revoked all browser access to its tables. So the obvious shortcut,
+reading agent runs straight from the browser the way Restora reads incidents,
+would have reversed a decision recorded in an ADR. The agent noticed, said so,
+and went the other way: the shell calls the control plane's API with the
+session it already has, and the API opens a tenant scope. That respected three
+existing ADRs and produced a fourth, ADR-0005, which records why.
+
+**The rule went into the database again (Concepts 3 and 15).** The two
+products needed to meet somewhere, and the meeting point is a failed agent run
+becoming a Restora alert. The agent wrote that as a trigger on the runs table,
+not as application code — because the convention in `CLAUDE.md`, learned from
+the evidence bug months earlier, says a rule that must hold for every writer
+lives in SQL. The trigger fires whether the run was moved by the control
+plane, the runtime, or a hotfix at 2am. Compound engineering is exactly this:
+a lesson from one product applied, unprompted, to the next.
+
+**The stubs became real, with the fakes the original authors left
+(Concept 5).** The control plane's portal routes were documented stubs
+returning 501. The agent implemented them over the existing tenant-scoped
+store, reusing the repository's own testing pattern — a recording fake that
+proves every read opens a tenant scope first — and added tests for the
+approval rules: a member cannot decide, an approver's decision binds to the
+artifact digest they saw, and a stale digest is refused rather than silently
+re-bound. 128 tests became 171. The one identity decision it had to make —
+verifying the shell's Supabase session instead of the planned Entra SSO — it
+made, wrote down, and confined to a single method so it could not spread.
+
+**MCP caught a real hole, in the old product (Concept 8).** Running the
+security advisor after the merge's migrations surfaced a finding that predated
+the merge: every `security definer` RPC in Restora's schema was executable by
+the anonymous role, because Postgres grants execute to `PUBLIC` by default.
+An unauthenticated caller with the publishable key could declare an incident.
+Row-level security inside the functions limited the damage; it did not remove
+it. One migration later the grant is explicit — signed-in responders and the
+service role, nothing else — and the default for future functions is closed.
+I would not have found that by reading the code. The linter did.
+
+**Validation stopped where it should (Concept 10).** The agent proved the
+identity path end to end in the browser: signed in as me, the shell's token
+reached the control plane, was verified against Supabase Auth, and the request
+stopped at "DATABASE_URL is not set" — because the agent did not have the
+database password and I did. It reported that as the exact boundary of what it
+had verified, then checked the hardened RPC grant the same way, as two live
+calls: anonymous refused, signed in served. What it could not test, it named.
+
+**And the portal was retired, not kept (Concept 5 again).** The second product
+had a Next.js front door with stubbed data. Keeping it alongside the Restora
+shell would have been two shells sharing a login — the duplicated chrome was
+the cost, not the sign-in. Its Linear-derived patterns carried over as
+design notes; the code did not. An agentic codebase has one way to do a thing.
+
+None of this was a new capability. It was the same fifteen concepts, applied
+to a second codebase by an agent that had the first one's context — and the
+context is what made the second one fast.
+
 ## The five pillars
 
 Everything above collapses into five things the environment around the model
@@ -459,11 +544,12 @@ The repository is laid out so a reader can follow the same path:
 
 ```
 agentops-incident-hub/
-├── CLAUDE.md                  durable context (Concept 4)
+├── CLAUDE.md                  durable context for both products (Concept 4)
 ├── docs/                      PRD, rules, architecture, API contract (Concept 3)
 ├── backend/                   FastAPI agent API, SSE, webhooks, tests (Concepts 7, 10)
-├── frontend/                  React app and marketing site (Concept 9)
-├── supabase/migrations/       the database, applied through MCP (Concept 8)
+├── frontend/                  one shell: Restora, AI DevOps, the marketing site (Concept 9)
+├── aidevops/                  the control plane, execution plane, contracts, ADRs
+├── supabase/migrations/       one database, both schemas, applied through MCP (Concept 8)
 ├── scripts/                   deterministic pipeline and media renderers (Concept 6)
 ├── skills/                    triage-incident, architecture-review, validate-dashboard
 ├── evals/                     dashboard-eval, incident-report-eval (Concept 11)
