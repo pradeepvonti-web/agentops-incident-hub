@@ -45,6 +45,7 @@ project URL and publishable key.
 | `…_realtime_publication` | ten tables into `supabase_realtime` |
 | `…_tighten_anon_grants` | anonymous readers see only the status page |
 | `…_status_feed` | the public status projection (deliberately not `security_invoker`) |
+| `…_revoke_anon_function_execute` | RPCs are executable by `authenticated` and `service_role` only, never `anon` |
 
 And the control plane's (`aidevops/`), which sort first by version:
 

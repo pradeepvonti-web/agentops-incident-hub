@@ -67,6 +67,14 @@ These are enforced in SQL so that no client can skip them.
 | `on_call_now(schedule)` | Who is on call, with overrides winning |
 | `bump_workflow_runs(workflow)` | Run counter |
 
+These are `security definer`, so they can write rows the caller's policies
+would not allow directly; that is the point of them. Their `execute` grant is
+therefore explicit: `authenticated` and `service_role` only. `anon` cannot call
+any function in the schema, and the default privilege for new functions is
+closed too. A new RPC needs its grant in the migration that creates it, or
+nobody can call it. Trigger functions have no grant at all; the trigger runs
+them as the table owner.
+
 ## Row level security
 
 Every table has RLS on.
@@ -114,4 +122,6 @@ agentops_views                     incident_list, insight_totals
 agentops_bump_workflow_runs        workflow counter
 agentops_realtime_publication      realtime
 agentops_tighten_anon_grants       anon reads only the status page
+agentops_status_feed               the public status projection
+agentops_revoke_anon_function_execute   RPC execute is an explicit grant, never PUBLIC
 ```
