@@ -40,7 +40,7 @@ insights. What exists today is a Supabase Postgres schema with 26 tables and
 row-level security, a React application that reads and writes through Supabase
 and updates live across browser tabs, a FastAPI service for agents with an SSE
 event stream and an alert webhook, a marketing site, 26 backend tests, and
-roughly 8,000 lines of frontend code — plus, since the merge, a second FastAPI
+roughly 7,000 lines of frontend code — plus, since the merge, a second FastAPI
 service with forced per-tenant row-level security and 171 tests of its own —
 all built with Claude Code driving and me steering.
 
